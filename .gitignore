@@ -46,3 +46,4 @@ dist/
 build/
 tdb
 eg/csv.go
+t.png

@@ -30,17 +30,17 @@ func main() {
 	fmt.Println("===============================")
 }
 
-const Text = `[Customers CID int Company str Address str Contact str Email str
+const Text = `[Customers CID int Company str Address str Contact str Email str Icon bytes
 %
-50 <Best People> <123 Somewhere> <John Doe> <j@doe.com> 
-19 <Supersuppliers> # <Jane Doe> <jane@super.com> 
+50 <Best People> <123 Somewhere> <John Doe> <j@doe.com> (89504E470D0A1A0A0000000D494844520000000C0000000C080600000056755CE7000000097048597300000EC400000EC401952B0E1B0000002849444154289163646068F8CF4002602245317D34B0600A3530621183FB7310FA81640D8C832FE2002C7F051786CBFA670000000049454E44AE426082)
+19 <Supersuppliers> # <Jane Doe> <jane@super.com> #
 ]
 [Invoices INUM int CID int Raised_Date date Due_Date date Paid bool Description str
 %
 152 50 2022-01-17 2022-02-17 no <COD> 
 153 19 2022-01-19 2022-02-19 yes # 
 ]
-[Items IID int INUM int Delivery_Date date Unit_Price real Quantity int Description str
+[Items LIID int INUM int Delivery_Date date Unit_Price real Quantity int Description str
 %
 1839 152 2022-01-16 29.99 2 <Bales of hay> 
 1840 152 2022-01-16 5.98 3 <Straps> 
@@ -49,9 +49,9 @@ const Text = `[Customers CID int Company str Address str Contact str Email str
 `
 
 type Database struct {
-	Customers []Customer
-	Invoices  []Invoice
-	Items     []Item
+	Customers []Customer `tdb:"Customer"`
+	Invoices  []Invoice  `tdb:"Invoice"`
+	Items     []LineItem `tdb:"LineItem"`
 }
 
 type Customer struct {
@@ -60,6 +60,7 @@ type Customer struct {
 	Address string `tdb:"Address"`
 	Contact string `tdb:"Contact"`
 	Email   string `tdb:"Email"`
+	Icon    []byte `tdb:"Icon"` // PNG
 }
 
 type Invoice struct {
@@ -71,8 +72,8 @@ type Invoice struct {
 	Desc   string    `tdb:"Desc"`
 }
 
-type Item struct {
-	Iid       int       `tdb:"IID"`
+type LineItem struct {
+	Liid      int       `tdb:"LIID"`
 	Inum      int       `tdb:"INUM"`
 	Delivered time.Time `tdb:"Delivered_Date"`
 	UnitPrice float64   `tdb:"Unit_Price"`
