@@ -4,25 +4,15 @@ Text DataBase (TDB) is a plain text human readable typed database storage
 format.
 
 - [Datatypes](#datatypes)
-    - [Table of Built-in Types](#table-of-built-in-types)
-    - [Terminology](#terminology)
-    - [Minimal empty TDB](#minimal-empty-uxf)
-    - [Built-in Types](#built-in-types)
-    - [Custom Types](#custom-types)
     - [Formatting](#formatting)
 - [Examples](#examples)
-    - [JSON](#json)
     - [CSV](#csv)
-    - [TOML](#toml)
-    - [Configuration Files](#configuration-files)
     - [Database](#database)
-- [Libraries](#libraries) [[Python](py/README.md)] [[Rust](rs/README.md)]
-    - [Implementation Notes](#implementation-notes)
-- [Imports](#imports)
+- [Libraries](#libraries)
 - [BNF](#bnf)
 - [Supplementary](#supplementary)
     - [Vim Support](#vim-support)
-    - [TDB Logo](#uxf-logo)
+    - [TDB Logo](#tdb-logo)
 
 ## Datatypes
 
@@ -186,25 +176,16 @@ A TDB file consists of a mandatory header followed by an optional file-level
 comment, optional imports, optional _ttype_ definitions, and then a single
 mandatory `list`, `map`, or `table` (which may be empty).
 
-    TDB          ::= 'uxf' RWS VERSION CUSTOM? '\n' CONTENT
-    VERSION      ::= /\d{1,3}/
+    TDB          ::= 'TDB1' CUSTOM? '\n' TABLE+
     CUSTOM       ::= RWS [^\n]+ # user-defined data e.g. filetype and version
-    CONTENT      ::= COMMENT? IMPORT* TTYPEDEF* (MAP | LIST | TABLE)
-    IMPORT       ::= '!' /\s*/ IMPORT_FILE '\n' # See below for IMPORT_FILE
-    TTYPEDEF     ::= '=' COMMENT? OWS IDENFIFIER (RWS FIELD)* # IDENFIFIER is the ttype (i.e., the table name)
-    FIELD        ::= IDENFIFIER (OWS ':' OWS VALUETYPE)? # IDENFIFIER is the field name (see note below)
-    MAP          ::= '{' COMMENT? MAPTYPES? OWS (KEY RWS VALUE)? (RWS KEY RWS VALUE)* OWS '}'
-    MAPTYPES     ::= OWS KEYTYPE (RWS VALUETYPE)?
-    KEYTYPE      ::=  'bytes' | 'date' | 'datetime' | 'int' | 'str'
-    VALUETYPE    ::= KEYTYPE | 'bool' | 'real' | 'list' | 'map' | 'table' | IDENFIFIER # IDENFIFIER is table name
-    LIST         ::= '[' COMMENT? LISTTYPE? OWS VALUE? (RWS VALUE)* OWS ']'
-    LISTTYPE     ::= OWS VALUETYPE
-    TABLE        ::= '(' COMMENT? OWS IDENFIFIER (RWS VALUE)* ')' # IDENFIFIER is the ttype (i.e., the table name)
-    COMMENT      ::= OWS '#' STR
-    KEY          ::= BYTES | DATE | DATETIME | INT | STR
-    VALUE        ::= KEY | NULL | BOOL | REAL | LIST | MAP | TABLE
+    TABLE        ::= '[' OWS TDEF OWS '%' OWS ROW* OWS ']'
+    TDEF         ::= IDENFIFIER (RWS FDEF)+ # IDENFIFIER is the table name
+    FDEF         ::= IDENFIFIER RWS TYPE ('?')? # IDENFIFIER is the field name
+    TYPE         ::= 'bool' | 'bytes' | 'date' | 'datetime' | 'int' | 'real' | 'str'
+    ROW          ::= OWS VALUE (RWS VALUE)*
+    VALUE        ::= BOOL | BYTES | DATE | DATETIME | INT | NULL | REAL | STR # NULL is only valid in nullable fields
     NULL         ::= '?'
-    BOOL         ::= 'no' | 'yes'
+    BOOL         ::= 'F' | 'T'
     INT          ::= /[-+]?\d+/
     REAL         ::= # standard or scientific notation
     DATE         ::= /\d\d\d\d-\d\d-\d\d/ # basic ISO8601 YYYY-MM-DD format
@@ -212,63 +193,17 @@ mandatory `list`, `map`, or `table` (which may be empty).
     STR          ::= STR_FRAGMENT (OWS '&' OWS STR_FRAGMENT)*
     STR_FRAGMENT ::= /[<][^<>]*?[>]/ # newlines allowed, and &amp; &lt; &gt; supported i.e., XML
     BYTES        ::= '(' (OWS [A-Fa-f0-9]{2})* OWS ')'
-    IDENFIFIER   ::= /[_\p{L}]\w{0,31}/ # Must start with a letter or underscore; may not be a built-in typename or constant
+    IDENFIFIER   ::= /[_\p{L}]\w{0,31}/ # Must start with a letter or underscore; may not be a built-in TYPE
     OWS          ::= /[\s\n]*/
     RWS          ::= /[\s\n]+/ # in some cases RWS is actually optional
 
-Note that a TDB file _must_ contain a single list, map, or table, even if
-it is empty.
-
-An `IMPORT_FILE` may be a filename which does _not_  have a file suffix, in
-which case it is assumed to be a “system” TDB provided by the TDB processor
-itself. (Currently there are just three system TDBs: `complex`, `fraction`,
-and `numeric`.) Or it may be a filename with an absolute or relative path.
-In the latter case the import is searched for in the importing `.uxf` file's
-folder, or the current folder, or a folder in the `TDB_PATH` until it is
-found—or not). Or it may be a URL referring to an external TDB file. (See
-[Imports](#imports).)
-
-To indicate any type valid for the context, simply omit the type name.
-
-As the BNF shows, `list`, `map`, and `table` values may be of _any_ type
-including nested ``list``s, ``map``s, and ``table``s.
-
-For a `table`, after the optional comment, there must be an identifier which
-is the table's _ttype_. This is followed by the table's values. There's no
-need to distinguish between one row and the next (although it is common to
-start new rows on new lines) since the number of fields indicate how many
-values each row has. It is possible to create tables that have no fields;
-these might be used for representing constants (or enumerations or states).
+Note that a TDB file _must_ contain at least one table even if it is empty.
 
 Note that for any given table each field name must be unique.
 
-If a list value, map key, or table value's type is specified, then the TDB
-processor is expected to be able to check for (and if requested and
-possible, correct) any mistyped values. TDB writers are expected output
-collections—``list`` values and  ``table`` records (and values within
-records) in order. Similarly `map` items should be output in key-order: when
-two keys are of different types they should be ordered `bytes` `<` `date`
-`<` `datetime` `<` `int` `<` `str`, and when two keys have the same types
-they should be ordered using `<` except for ``str``s which should use
-case-insensitive `<`.
-
-For ``datetime``'s, only 1-second resolution is supported and no timezones.
-If microsecond resolution or timezones are required, consider using custom
-_ttypes_, e.g.,
-
-    =Timestamp when:datetime microseconds:real
-    =DateTime when:datetime tz:str
-
-Alternatively, if all the ``datetime``s in a TDB have the _same_ timezone,
-one approach would be to to just set it once, and then use plain
-``datetime``s throughout e.g.,
-
-    =Timezone tz:str
-    [(Timezone <+01:00>) ... 1990-01-15T13:05 ...]
-
 Note that a TDB reader (writer) _must_ be able to read (write) a plain text
-`.uxf` file containing UTF-8 encoded text, and _ought_ to be able to read
-and write gzipped plain text `.uxf.gz` files.
+`.tdb` file containing UTF-8 encoded text, and _ought_ to be able to read
+and write gzipped plain text `.tdb.gz` files.
 
 Note also that TDB readers and writers should _not_ care about the actual
 file extension (apart from the `.gz` needed for gzipped files), since users
@@ -279,14 +214,14 @@ are free to use their own. For example, `data.myapp` and `data.myapp.gz`.
 ### Vim Support
 
 If you use the vim editor, simple color syntax highlighting is available.
-Copy `uxf.vim` into your `$VIM/syntax/` folder and add these lines (or
+Copy `tdb.vim` into your `$VIM/syntax/` folder and add these lines (or
 similar) to your `.vimrc` or `.gvimrc` file:
 
-    au BufRead,BufNewFile,BufEnter * if getline(1) =~ '^uxf ' | setlocal ft=uxf | endif
-    au BufRead,BufNewFile,BufEnter *.uxf set ft=uxf|set expandtab|set tabstop=2|set softtabstop=2|set shiftwidth=2
+    au BufRead,BufNewFile,BufEnter * if getline(1) =~ '^tdb ' | setlocal ft=tdb | endif
+    au BufRead,BufNewFile,BufEnter *.tdb set ft=tdb|set expandtab|set tabstop=2|set softtabstop=2|set shiftwidth=2
 
 ### TDB Logo
 
-![uxf logo](uxf.svg)
+![tdb logo](tdb.svg)
 
 ---
