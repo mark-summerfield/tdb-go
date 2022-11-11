@@ -1,8 +1,8 @@
-TDB1 MyApp Data
+Tdb1
 [Customers CID int Company str Address str Contact str Email str
 %
     50 <Best People> <123 Somewhere> <John Doe> <j@doe.com> 
-    19 <Supersuppliers> ! <Jane Doe> <jane@super.com> 
+    19 <Supersuppliers> # <Jane Doe> <jane@super.com> 
 ]
 [Invoices INUM int CID int Raised_Date date Due_Date date Paid bool Description str
 %

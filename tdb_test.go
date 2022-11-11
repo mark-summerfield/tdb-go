@@ -29,10 +29,17 @@ func expectEmptySlice(slice []string, what string) string {
 }
 */
 
+type T1 struct {
+	ft int
+}
+
+/*
 func Test001(t *testing.T) {
-	expected := "Hello tdb v0.1.0\n"
-	actual := Hello()
+	expected := "Tdb1\n[T1 f1 int]"
+	var
+	actual := tdb.Unmarshal(
 	if actual != expected {
 		t.Errorf("expected %q, got %q", expected, actual)
 	}
 }
+*/

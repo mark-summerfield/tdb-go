@@ -45,3 +45,4 @@ zig-cache
 dist/
 build/
 tdb
+eg/csv.go

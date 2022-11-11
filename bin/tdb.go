@@ -4,12 +4,12 @@
 package main
 
 import (
-    "fmt"
-    "github.com/mark-summerfield/tdb"
+	"fmt"
+	//"github.com/mark-summerfield/tdb"
 )
 
 func main() {
-    // TODO
-    text := tdb.Hello()
-    fmt.Println(text)
+	// TODO
+	text := "tdb TODO"
+	fmt.Println(text)
 }
