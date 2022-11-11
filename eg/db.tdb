@@ -1,17 +1,16 @@
-Tdb1
 [Customers CID int Company str Address str Contact str Email str
 %
-    50 <Best People> <123 Somewhere> <John Doe> <j@doe.com> 
-    19 <Supersuppliers> # <Jane Doe> <jane@super.com> 
+50 <Best People> <123 Somewhere> <John Doe> <j@doe.com> 
+19 <Supersuppliers> # <Jane Doe> <jane@super.com> 
 ]
 [Invoices INUM int CID int Raised_Date date Due_Date date Paid bool Description str
 %
-    152 50 2022-01-17 2022-02-17 no <COD> 
-    153 19 2022-01-19 2022-02-19 yes # 
+152 50 2022-01-17 2022-02-17 no <COD> 
+153 19 2022-01-19 2022-02-19 yes # 
 ]
 [Items IID int INUM int Delivery_Date date Unit_Price real Quantity int Description str
 %
-    1839 152 2022-01-16 29.99 2 <Bales of hay> 
-    1840 152 2022-01-16 5.98 3 <Straps> 
-    1620 153 2022-01-19 11.5 1 <Washers (1-in)> 
+1839 152 2022-01-16 29.99 2 <Bales of hay> 
+1840 152 2022-01-16 5.98 3 <Straps> 
+1620 153 2022-01-19 11.5 1 <Washers (1-in)> 
 ]

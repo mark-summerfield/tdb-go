@@ -26,8 +26,8 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.979899"
-     inkscape:cx="165.72315"
-     inkscape:cy="158.60208"
+     inkscape:cx="96.022625"
+     inkscape:cy="157.59193"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -43,7 +43,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -54,15 +54,16 @@
      transform="translate(-91.615304,-51.034435)">
     <g
        id="g3791"
-       transform="translate(2.2568378,-13.965394)">
+       transform="translate(2.2568378,-13.965394)"
+       style="fill:#008080">
       <text
          transform="scale(0.8665672,1.1539786)"
          id="text12"
          y="126.54865"
          x="132.14679"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:84.47815704px;line-height:125%;font-family:'Liberation Sans';-inkscape-font-specification:'Liberation Sans Bold';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000080;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:84.47815704px;line-height:125%;font-family:'Liberation Sans';-inkscape-font-specification:'Liberation Sans Bold';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#008080;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
-           style="fill:#000080;stroke-width:0.26458332px"
+           style="fill:#008080;stroke-width:0.26458332px"
            y="126.54865"
            x="132.14679"
            id="tspan10"
@@ -72,9 +73,9 @@
          id="text12-3-7"
          y="85.895569"
          x="126.91102"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:49.31449509px;line-height:125%;font-family:'Liberation Sans';-inkscape-font-specification:'Liberation Sans Bold';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000080;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:49.31449509px;line-height:125%;font-family:'Liberation Sans';-inkscape-font-specification:'Liberation Sans Bold';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#008080;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
-           style="fill:#000080;stroke-width:0.26458332px"
+           style="fill:#008080;stroke-width:0.26458332px"
            y="85.895569"
            x="126.91102"
            id="tspan10-6-5"
@@ -84,9 +85,9 @@
          id="text12-3-7-3"
          y="179.51227"
          x="100.17551"
-         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:49.31449509px;line-height:125%;font-family:'Liberation Sans';-inkscape-font-specification:'Liberation Sans Bold';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000080;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:49.31449509px;line-height:125%;font-family:'Liberation Sans';-inkscape-font-specification:'Liberation Sans Bold';text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#008080;fill-opacity:1;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
          xml:space="preserve"><tspan
-           style="fill:#000080;stroke-width:0.26458332px"
+           style="fill:#008080;stroke-width:0.26458332px"
            y="179.51227"
            x="100.17551"
            id="tspan10-6-5-5"
