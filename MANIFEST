@@ -1,3 +1,6 @@
+# repo: https://github.com/mark-summerfield/tdb-go
+# (to allow for other implementations in separate repos)
+
 tdb.go
 
 tdb_test.go
