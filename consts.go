@@ -3,8 +3,10 @@
 
 package tdb
 
+/*
 const (
 	eNotAPointer        = iota + 100
 	eNotASlice          // 101
 	eNotASliceOfStructs // 102
 )
+*/

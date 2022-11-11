@@ -14,36 +14,25 @@ var Version string
 
 const Header = "Tdb1"
 
-// Marshal maps all of the structs in a slice of structs to a string (as raw
-// UTF-8-encoded bytes) in Tdb1 format.
+// Marshal converts the given Tdb struct to a string (as raw UTF-8-encoded
+// bytes) in Tdb format. The Tdb struct must be provided by you, e.g.:
+//
+//	type MyTdb struct {
+//		Custom string // The Tdb file's custom string (often "")
+//		Tables []MyStructType // This is where the table data goes
+//	}
 func Marshal(v any) ([]byte, error) {
 	return nil, nil // TODO
 }
 
-// Unmarshal maps the data from given string (as raw UTF-8-encoded bytes)
-// into a slice of structs.
+// Unmarshal reads the data from the given string (as raw UTF-8-encoded
+// bytes) into a result struct that you must provide:
+//
+//	type MyTdb struct {
+//		Custom string // The Tdb file's custom string (often "")
+//		Tables []MyStructType // This is where the table data goes
+//	}
 func Unmarshal(data []byte, v any) error {
-	sliceValuePtr := reflect.ValueOf(v)
-	if sliceValuePtr.Kind() != reflect.Ptr {
-		return fmt.Errorf(
-			"#%d: target isn't a pointer to a slice of structs",
-			eNotAPointer)
-	}
-	sliceValue := sliceValPtr.Elem()
-	if sliceVal.Kind() != reflect.Slice {
-		return fmt.Errorf("#%d: target isn't a slice",
-			eNotASlice)
-	}
-	structType := sliceVal.Type().Elem()
-	if structType.Kind() != reflect.Struct {
-		return fmt.Errorf("#%d: target isn't a slice of structs",
-			eNotASliceOfStructs)
-	}
-	size := len(Header)
-	if len(data) > size {
-		if data[:size] == []byte(Header) { // Strip header if present
-			data = data[size:]
-		}
-	}
+	// TODO
 	return nil // TODO
 }
