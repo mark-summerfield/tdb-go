@@ -1,5 +1,5 @@
 #!/bin/bash
-clc -sS -e tdb_test.go
+clc -s -e tdb_test.go eg bin
 go mod tidy
 go fmt .
 staticcheck .
