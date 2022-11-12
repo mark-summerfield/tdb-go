@@ -5,9 +5,9 @@ format.
 
 - [Datatypes](#datatypes)
 - [Examples](#examples)
-    - [Minimal Tdb Files](#minimal-tdb-files)
     - [CSV](#csv)
     - [Database](#database)
+    - [Minimal Tdb Files](#minimal-tdb-files)
     - [Metadata](#metadata)
 - [Libraries](#libraries)
 	- [Go](#go)
@@ -42,33 +42,6 @@ spaces, tabs, or newlines in any combination.
 
 ## Examples
 
-### Minimal Tdb Files
-
-	[T f int
-	%
-	]
-
-This file has a single table called `T` which has a single field called `f`
-of type `int`, and no rows.
-
-	[T f int
-	%
-	0
-	]
-
-This is like the previous table but now with one row containing the value
-`0`.
-
-	[T f int
-	%
-	0
-	#
-	]
-
-Again like the previous table, but now with two rows, the first containing
-the value `0`, and the second also containing the value `0` (`#` is used to
-indicate the field type's “zero” value, in this case, `0`).
-
 ### CSV
 
 Although widely used, the CSV format is not standardized and has a number of
@@ -83,6 +56,7 @@ Here's a simple CSV file:
     "2022-09-21",3.99,2,"CH1-A2","Chisels (pair), 1in & 1¼in"
     "2022-10-02",4.49,1,"HV2-K9","Hammer, 2lb"
     "2022-10-02",5.89,1,"SX4-D1","Eversure Sealant, 13-floz"
+    "2022-11-13",8.49,,"PV7-X2",
 
 Here's a Tdb equivalent:
 
@@ -133,6 +107,33 @@ In the Customers table the second customer's Address and in the Invoices
 table, the second invoice's Description the `str` type's zero value (an
 empty string) is used.
 
+### Minimal Tdb Files
+
+	[T f int
+	%
+	]
+
+This file has a single table called `T` which has a single field called `f`
+of type `int`, and no rows.
+
+	[T f int
+	%
+	0
+	]
+
+This is like the previous table but now with one row containing the value
+`0`.
+
+	[T f int
+	%
+	0
+	#
+	]
+
+Again like the previous table, but now with two rows, the first containing
+the value `0`, and the second also containing the value `0` (`#` is used to
+indicate the field type's “zero” value, in this case, `0`).
+
 ### Metadata
 
 If comments or metadata are required, simply create an additional table to
@@ -160,7 +161,7 @@ _This format does not currently have any implementations._
 
 ## BNF
 
-A Tdb file consists of an optional header followed by one or more tables.
+A Tdb file consists of one or more tables.
 
     TDB          ::= TABLE+
     TABLE        ::= OWS '[' OWS TDEF OWS '%' OWS ROW* OWS ']' OWS
