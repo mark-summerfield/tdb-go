@@ -111,7 +111,7 @@ is used to represent a null field value.
 Here is a version of the previous database with some sensible contraints.
 
 	[Customers
-	  CID int auto
+	  CID int unique min 1
 	  Company str
 	  Address str?
 	  Contact str
@@ -133,7 +133,7 @@ Here is a version of the previous database with some sensible contraints.
 	153 19 2022-01-19 2022-02-19 yes ?
 	]
 	[LineItems
-	  LIID int auto
+	  LIID int unique min 1
 	  INUM int ref Invoices.INUM
 	  Delivery_Date date
 	  Unit_Price real
@@ -145,11 +145,11 @@ Here is a version of the previous database with some sensible contraints.
 	1620 153 2022-01-19 11.5 1 <Washers (1")> 
 	]
 
-Some of the constraints are that the Customers table's CID field is `auto`;
-this implies two other constraints: `unique` and `min 1`. Both the Address
-and Icon fields are nullable. And for the Invoices table, its INUM is
-`unique` with a minimu of 100 and it has a `ref` (i.e., a foreign key) into
-the Customers table's CID field.
+Some of the constraints are that the Customers table's CID field is `unique`
+and `min 1`. Both the Address and Icon fields are nullable. And for the
+Invoices table, its INUM is `unique` and `min 100`, and its CID a `ref`
+(i.e., a foreign key) into the Customers table's CID field. There are
+similar constraints for the LineItems table
 
 ### Minimal Tdb Files
 
@@ -194,7 +194,7 @@ _This format does not currently have any implementations._
 ### Go
 
 |**Tdb Type**|**Go Type**|
-|------------|----------------------|
+|------------|-----------|
 |`bool`      |`bool`|
 |`bytes`     |`[]byte`|
 |`date`      |`time.Time`|
@@ -218,16 +218,16 @@ A Tdb file consists of one or more tables.
                  |  'bytes' COMMON
                  |  'date' COMMON
                  |  'datetime' COMMON
-                 |  'int' COMMON (RWS 'auto' | UNIQUE)? IN? REF?
+                 |  'int' COMMON UNIQUE? IN? REF?
                  |  'real' COMMON
                  |  'str' COMMON UNIQUE? IN? REF?
 	COMMON      ::= NULL? DEFAULT? MIN? MAX?
     DEFAULT     ::= (RWS 'default' RWS TYPEVAL)
     MIN         ::= (RWS 'min' RWS TYPEVAL)
     MAX         ::= (RWS 'max' RWS TYPEVAL)
-    IN          ::= (RWS 'in' (RWS TYPEVAL)+)
     UNIQUE      ::= (RWS 'unique')
-    REF         ::= (RWS IDENTIFIER? '.' IDENTIFIER) # first is tablename (missing means this table); second is fieldname
+    IN          ::= (RWS 'in' (RWS TYPEVAL)+)
+    REF         ::= (RWS (IDENTIFIER '.')? IDENTIFIER) # first is tablename (missing means this table); second is fieldname
     RECORD      ::= OWS FIELD (RWS FIELD)*
     FIELD       ::= BOOL | BYTES | DATE | DATETIME | INT | REAL | STR | NULL
     BOOL        ::= 'F' | 'T'
@@ -262,8 +262,8 @@ _Notes_
   table each field name must be unique.
 - No table name or field name (i.e., no identifier) may be the same as a
   built-in constant:  
-  `auto`, `bytes`, `date`, `datetime`, `default`, `F`, `in`, `int`, `max`,
-  `min`, `real`, `ref`, `str`, `T`, `unique`.
+  `bytes`, `date`, `datetime`, `default`, `F`, `in`, `int`, `max`, `min`,
+  `real`, `ref`, `str`, `T`, `unique`.
 - A Tdb reader (writer) _must_ be able to read (write) a plain text `.tdb`
   file containing UTF-8 encoded text, and _ought_ to be able to read and
   write gzipped plain text `.tdb.gz` files.

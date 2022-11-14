@@ -1,5 +1,5 @@
 [Customers
- CID int auto
+ CID int unique min 1
  Company str
  Address str?
  Contact str
@@ -21,7 +21,7 @@
 153 19 2022-01-19 2022-02-19 yes ?
 ]
 [LineItems
-  LIID int auto
+  LIID int unique min 1
   INUM int ref Invoices.INUM
   Delivery_Date date
   Unit_Price real

@@ -2,7 +2,7 @@
   empno int unique min 1
   ename str?
   job str?
-  mgr int? ref .empno
+  mgr int? ref empno
   hiredate date?
   sal real? min 0
   comm real? min 0

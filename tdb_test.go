@@ -17,14 +17,10 @@ import (
 // gong.IsRealClose() & gong.IsRealZero()
 
 func Test001(t *testing.T) {
-	icon, err := hex.DecodeString("89504E470D0A1A0A0000000D494844520000000C0000000C080600000056755CE7000000097048597300000EC400000EC401952B0E1B0000002849444154289163646068F8CF4002602245317D34B0600A3530621183FB7310FA81640D8C832FE2002C7F051786CBFA670000000049454E44AE426082")
-	if err != nil {
-		t.Error(err)
-	}
-	TdbDatabase.Customers[0].Icon = icon
+	db := makeDb(t)
 	fmt.Println("======= Tdb example data ======")
-	fmt.Println(TdbDatabase)
-	raw, err := tdb.Marshal(TdbDatabase)
+	fmt.Println(db)
+	raw, err := tdb.Marshal(db)
 	if err != nil {
 		t.Error(err)
 	}
@@ -51,33 +47,64 @@ func Test001(t *testing.T) {
 	fmt.Println("===============================")
 }
 
-var TdbDatabase = Database{
-	Customers: []Customer{
-		{50, "Best People", "123 Somewhere", "John Doe", "j@doe.com", nil},
-		{19, "Supersuppliers", "", "Jane Doe", "jane@super.com", nil},
-	},
-	Invoices: []Invoice{
-		{152, 50, time.Date(2022, time.January, 17, 0, 0, 0, 0, time.UTC),
-			time.Date(2022, time.February, 17, 0, 0, 0, 0, time.UTC),
-			false, "COD"},
-		{153, 19, time.Date(2022, time.January, 19, 0, 0, 0, 0, time.UTC),
-			time.Date(2022, time.February, 19, 0, 0, 0, 0, time.UTC), true,
-			""},
-	},
-	LineItems: []LineItem{
-		{1839, 152, time.Date(2022, time.January, 16, 0, 0, 0, 0, time.UTC),
-			29.99, 2, "Bales of <hay>"},
-		{1840, 152, time.Date(2022, time.January, 16, 0, 0, 0, 0, time.UTC),
-			5.98, 3, "Straps & Things"},
-		{1620, 153, time.Date(2022, time.January, 19, 0, 0, 0, 0, time.UTC),
-			11.5, 1, "Washers (1\")"},
-	},
+func makeDb(t *testing.T) Database {
+	icon, err := hex.DecodeString("89504E470D0A1A0A0000000D494844520000000C0000000C080600000056755CE7000000097048597300000EC400000EC401952B0E1B0000002849444154289163646068F8CF4002602245317D34B0600A3530621183FB7310FA81640D8C832FE2002C7F051786CBFA670000000049454E44AE426082")
+	if err != nil {
+		t.Error(err)
+	}
+	db := Database{
+		Customers: []Customer{
+			{50, "Best People", "123 Somewhere", "John Doe", "j@doe.com",
+				nil},
+			{19, "Supersuppliers", "", "Jane Doe", "jane@super.com", nil},
+		},
+		Invoices: []Invoice{
+			{152, 50, time.Date(2022,
+				time.January, 17, 0, 0, 0, 0, time.UTC),
+				time.Date(2022, time.February, 17, 0, 0, 0, 0, time.UTC),
+				false, "COD"},
+			{153, 19,
+				time.Date(2022, time.January, 19, 0, 0, 0, 0, time.UTC),
+				time.Date(2022, time.February, 19, 0, 0, 0, 0, time.UTC),
+				true, ""},
+		},
+		LineItems: []LineItem{
+			{1839, 152,
+				time.Date(2022, time.January, 16, 0, 0, 0, 0, time.UTC),
+				29.99, 2, "Bales of <hay>"},
+			{1840, 152,
+				time.Date(2022, time.January, 16, 0, 0, 0, 0, time.UTC),
+				5.98, 3, "Straps & Things"},
+			{1620, 153,
+				time.Date(2022, time.January, 19, 0, 0, 0, 0, time.UTC),
+				11.5, 1, "Washers (1\")"},
+		}}
+	db.Customers[0].Icon = icon
+	db.Metadata = make(tdb.Metadata)
+	customer := tdb.NewMetatable()
+	cid := tdb.IntMeta("CID")
+	cid.SetUnique()
+	_ = cid.SetMin(1)
+	customer.Add(cid)
+	customer.Add(tdb.StrMeta("Company"))
+	address := tdb.StrMeta("Address")
+	address.SetNullable()
+	customer.Add(address)
+	customer.Add(tdb.StrMeta("Contact"))
+	customer.Add(tdb.StrMeta("Email"))
+	iconField := tdb.BytesMeta("Icon")
+	iconField.SetNullable()
+	customer.Add(iconField)
+	db.Metadata["Customers"] = customer
+	// TODO metadata for other tables
+	return db
 }
 
 type Database struct {
-	Customers []Customer `tdb:"Customer"`
-	Invoices  []Invoice  `tdb:"Invoice"`
-	LineItems []LineItem `tdb:"LineItem"`
+	tdb.Metadata `tdb:"Metadata"`
+	Customers    []Customer `tdb:"Customer"`
+	Invoices     []Invoice  `tdb:"Invoice"`
+	LineItems    []LineItem `tdb:"LineItem"`
 }
 
 type Customer struct {

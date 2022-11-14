@@ -16,7 +16,7 @@ syn sync fromstart linebreaks=3 minlines=50
 
 syn keyword tdbTodo TODO FIXME DELETE CHECK TEST XXX
 syn keyword tdbConst T F
-syn keyword tdbMeta unique min max default in ref auto
+syn keyword tdbMeta unique min max default in ref
 syn keyword tdbType bool bytes date datetime int real str
 syn match tdbNull /?/
 syn match tdbPunctuation /[][%]/

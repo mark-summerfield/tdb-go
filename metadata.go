@@ -4,53 +4,96 @@
 package tdb
 
 import (
-	_ "embed"
 	"fmt"
 	"github.com/mark-summerfield/gset"
+	"golang.org/x/exp/maps"
+	"sort"
+	"strings"
 	"time"
 	"unicode/utf8"
 )
 
-func BoolMeta(theDefault bool) Metadatum {
-	return Metadatum{kind: BoolKind, flag: notNullFlag,
-		theDefault: theDefault}
+type Metadata map[string]Metatable // Keys are tablenames
+
+func (me Metadata) String() string {
+	tableNames := maps.Keys(me)
+	sort.Strings(tableNames)
+	var s strings.Builder
+	for _, tableName := range tableNames {
+		s.WriteByte('[')
+		s.WriteString(tableName)
+		s.WriteByte('\n')
+		s.WriteString(me[tableName].String())
+	}
+	return s.String()
 }
 
-func BytesMeta(theDefault []byte) Metadatum {
-	return Metadatum{kind: BytesKind, flag: notNullFlag,
-		theDefault: theDefault}
+type Metatable struct {
+	fields       []*Metadatum          // The fields in order
+	fieldForName map[string]*Metadatum // Keys are fieldnames
 }
 
-func DateMeta(theDefault time.Time) Metadatum {
-	return Metadatum{kind: DateKind, flag: notNullFlag,
-		theDefault: theDefault}
+func NewMetatable() Metatable {
+	return Metatable{fields: make([]*Metadatum, 0, 1),
+		fieldForName: make(map[string]*Metadatum)}
 }
 
-func DateTimeMeta(theDefault time.Time) Metadatum {
-	return Metadatum{kind: DateTimeKind, flag: notNullFlag,
-		theDefault: theDefault}
+func (me Metatable) Field(index int) *Metadatum {
+	return me.fields[index]
 }
 
-func IntMeta(theDefault int) Metadatum {
-	return Metadatum{kind: IntKind, flag: notNullFlag,
-		theDefault: theDefault}
+func (me Metatable) FieldByName(fieldName string) *Metadatum {
+	if m, ok := me.fieldForName[fieldName]; ok {
+		return m
+	}
+	return nil
 }
 
-func AutoMeta() Metadatum {
-	return Metadatum{kind: IntKind, flag: autoFlag, next: 1}
+func (me *Metatable) Add(datum Metadatum) {
+	me.fields = append(me.fields, &datum)
+	me.fieldForName[datum.name] = &datum
 }
 
-func RealMeta(theDefault float64) Metadatum {
-	return Metadatum{kind: RealKind, flag: notNullFlag,
-		theDefault: theDefault}
+func (me Metatable) String() string {
+	var s strings.Builder
+	for _, datum := range me.fields {
+		s.WriteByte(' ')
+		s.WriteString(datum.String())
+		s.WriteByte('\n')
+	}
+	return s.String()
 }
 
-func StrMeta(theDefault string) Metadatum {
-	return Metadatum{kind: StrKind, flag: notNullFlag,
-		theDefault: theDefault}
+func BoolMeta(name string) Metadatum {
+	return Metadatum{name: name, kind: BoolKind, flag: notNullFlag}
+}
+
+func BytesMeta(name string) Metadatum {
+	return Metadatum{name: name, kind: BytesKind, flag: notNullFlag}
+}
+
+func DateMeta(name string) Metadatum {
+	return Metadatum{name: name, kind: DateKind, flag: notNullFlag}
+}
+
+func DateTimeMeta(name string) Metadatum {
+	return Metadatum{name: name, kind: DateTimeKind, flag: notNullFlag}
+}
+
+func IntMeta(name string) Metadatum {
+	return Metadatum{name: name, kind: IntKind, flag: notNullFlag}
+}
+
+func RealMeta(name string) Metadatum {
+	return Metadatum{name: name, kind: RealKind, flag: notNullFlag}
+}
+
+func StrMeta(name string) Metadatum {
+	return Metadatum{name: name, kind: StrKind, flag: notNullFlag}
 }
 
 type Metadatum struct {
+	name       string
 	kind       FieldKind
 	flag       fieldFlag
 	min        any // length for bytes & str; min value otherwise
@@ -59,11 +102,53 @@ type Metadatum struct {
 	inStrs     gset.Set[string]
 	theDefault any
 	ref        string // tablename.fieldname or fieldname
-	next       int    // for auto fields
 }
 
 func (me *Metadatum) SetNullable() {
 	me.flag = me.flag.with(nullableFlag)
+}
+
+// SetUnique sets the field to be unique: this also implies it is not
+// nullable.
+func (me *Metadatum) SetUnique() {
+	me.flag = uniqueFlag
+}
+
+func (me *Metadatum) SetDefault(theDefault any) error {
+	switch me.kind {
+	case BoolKind:
+		if _, ok := theDefault.(bool); ok {
+			me.theDefault = theDefault
+			return nil
+		}
+	case BytesKind:
+		if _, ok := theDefault.([]byte); ok {
+			me.theDefault = theDefault
+			return nil
+		}
+	case DateKind, DateTimeKind:
+		if _, ok := theDefault.(time.Time); ok {
+			me.theDefault = theDefault
+			return nil
+		}
+	case IntKind:
+		if _, ok := theDefault.(int); ok {
+			me.theDefault = theDefault
+			return nil
+		}
+	case RealKind:
+		if _, ok := theDefault.(float64); ok {
+			me.theDefault = theDefault
+			return nil
+		}
+	case StrKind:
+		if _, ok := theDefault.(string); ok {
+			me.theDefault = theDefault
+			return nil
+		}
+	}
+	return fmt.Errorf("%v is not a valid default for a field of type %s",
+		theDefault, me.kind)
 }
 
 func (me *Metadatum) SetMin(min any) error {
@@ -105,6 +190,46 @@ func (me *Metadatum) SetRef(ref string) {
 	me.ref = ref
 }
 
+func (me Metadatum) String() string {
+	var s strings.Builder
+	s.WriteString(me.name)
+	s.WriteByte(' ')
+	s.WriteString(me.kind.String())
+	if me.IsNullable() {
+		s.WriteString("?")
+	}
+	if me.theDefault != nil {
+		fmt.Fprintf(&s, " default %v", me.theDefault)
+	}
+	if me.min != nil {
+		fmt.Fprintf(&s, " min %v", me.min)
+	}
+	if me.max != nil {
+		fmt.Fprintf(&s, " max %v", me.max)
+	}
+	if me.IsUnique() {
+		s.WriteString(" unique")
+	}
+	if me.inInts != nil && len(me.inInts) > 0 {
+		s.WriteString(" in")
+		for _, x := range me.inInts.ToSortedSlice() {
+			fmt.Fprintf(&s, " %d", x)
+		}
+	}
+	if me.inStrs != nil && len(me.inStrs) > 0 {
+		s.WriteString(" in")
+		for _, x := range me.inStrs.ToSortedSlice() {
+			s.WriteString(" <")
+			s.WriteString(Escape(x))
+			s.WriteString(">")
+		}
+	}
+	if me.ref != "" {
+		fmt.Fprintf(&s, " ref %s", me.ref)
+	}
+	return s.String()
+}
+
 func (me Metadatum) Kind() FieldKind {
 	return me.kind
 }
@@ -115,27 +240,6 @@ func (me Metadatum) IsNullable() bool {
 
 func (me Metadatum) IsUnique() bool {
 	return me.flag.isUnique()
-}
-
-func (me Metadatum) IsAuto() bool {
-	return me.flag.isAuto()
-}
-
-func (me *Metadatum) Next() (int, bool) {
-	if !me.IsAuto() {
-		return 0, false
-	}
-	if me.min != nil {
-		if m, ok := me.min.(int); ok {
-			if me.next < m {
-				me.next = m + 1
-				return m, true
-			}
-		}
-	}
-	n := me.next
-	me.next++
-	return n, true
 }
 
 func (me Metadatum) IsInRange(fieldName string, value any) bool {
