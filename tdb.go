@@ -27,12 +27,18 @@ func Marshal(v any) ([]byte, error) {
 	//		:
 	// rowMfield0 ... rowMfieldN
 	// ]
+	/* NOTE look at encoding/{csv,json,xml} to see how they do it, e.g.,
+	NewReader, NewWriter ?
+	*/
 	return nil, nil // TODO
 }
 
 // Unmarshal reads the data from the given string (as raw UTF-8-encoded
 // bytes) into a struct.
 func Unmarshal(data []byte, v any) error {
+	/* NOTE look at encoding/{csv,json,xml} to see how they do it, e.g.,
+	NewReader, NewWriter ?
+	*/
 	// TODO
 	return nil // TODO
 }

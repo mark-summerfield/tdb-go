@@ -1,10 +1,20 @@
-# repo: https://github.com/mark-summerfield/tdb-go
-# (to allow for other implementations in separate repos)
-
+# (1) TODO ########################
+# consts.go
+#   wExpectedBool
+#   wExpectedBytes
+#   etc.
+# use these in metafield.go warnings()
+#  eInvalidDefault
+# use in SetDefault()
+#  eInvalidMinMax
+#  etc.
+# use in checkNumericKind()
+#
 # ~/app/uxf/py/uxf.py
-
 tdb.go # see xml Marshal & Unmarshal
-metadata.go
+metadata.go # (3) TODO switch to orderedmap for Metadata & Metatable
+metatable.go # (4) TODO switch to orderedmap for Metadata & Metatable
+metafield.go
 fieldkind.go
 fieldflag.go
 util.go
@@ -13,7 +23,7 @@ consts.go
 
 eg/csv.go # Learning Go eg
 
-tdb_test.go
+tdb_test.go # (2) TODO #######################
 
 bin/tdb.go # TODO tdb compare format lint
 convert/tdbconvert.go # TODO tdb ↔ sqlite csv uxf json etc.
