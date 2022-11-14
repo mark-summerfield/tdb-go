@@ -6,7 +6,7 @@ package tdb
 type FieldKind uint8
 
 const (
-	BoolKind = iota
+	BoolKind FieldKind = iota
 	BytesKind
 	DateKind
 	DateTimeKind

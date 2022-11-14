@@ -28,6 +28,13 @@ func (me Metadata) String() string {
 	return s.String()
 }
 
+func (me Metadata) Check() error {
+	// TODO iterate over all tables and call their isValid method
+	// TODO and for any which have refs, check that their is a corresponding
+	// table & field of the same int or str type
+	return nil
+}
+
 type Metatable struct {
 	fields       []*Metadatum          // The fields in order
 	fieldForName map[string]*Metadatum // Keys are fieldnames
@@ -62,6 +69,13 @@ func (me Metatable) String() string {
 		s.WriteByte('\n')
 	}
 	return s.String()
+}
+
+func (me Metatable) check() error {
+	// TODO iterate over all fields and call their check()
+	// TODO and for any which are unique, check for uniqueness
+	// TODO and for any which are not null, check for not nullness
+	return nil
 }
 
 func BoolMeta(name string) Metadatum {
@@ -185,9 +199,13 @@ func (me *Metadatum) SetInStrs(ints ...string) {
 	me.inStrs.Add(ints...)
 }
 
-func (me *Metadatum) SetRef(ref string) {
+func (me *Metadatum) SetRef(ref string) error {
+	if !strings.Contains(ref, ".") && ref == me.name {
+		return fmt.Errorf("cannot set a field ref to itself (%s)", ref)
+	}
 	// TODO check identifer.identifer or .identifer
 	me.ref = ref
+	return nil
 }
 
 func (me Metadatum) String() string {
@@ -242,115 +260,128 @@ func (me Metadatum) IsUnique() bool {
 	return me.flag.isUnique()
 }
 
-func (me Metadatum) IsInRange(fieldName string, value any) bool {
+func (me Metadatum) check(fieldName string, value any) error {
 	switch value := value.(type) {
 	case bool:
 		if me.kind != BoolKind {
-			return false
+			return fmt.Errorf("%s should be type %s", fieldName, BoolKind)
 		}
 	case []byte:
 		if me.kind != BytesKind {
-			return false
+			return fmt.Errorf("%s should be type %s", fieldName, BytesKind)
 		}
 		if me.min != nil {
 			if m, ok := me.min.(int); ok {
 				if len(value) < m {
-					return false
+					return fmt.Errorf("%s %d is not > %d", fieldName, value,
+						m)
 				}
 			}
 		}
 		if me.max != nil {
 			if m, ok := me.max.(int); ok {
 				if len(value) > m {
-					return false
+					return fmt.Errorf("%s %d is not < %d", fieldName, value,
+						m)
 				}
 			}
 		}
 	case time.Time:
 		if !(me.kind == DateKind || me.kind == DateTimeKind) {
-			return false
+			return fmt.Errorf("%s should be a %s or %s", fieldName,
+				DateKind, DateTimeKind)
 		}
 		if me.min != nil {
 			if m, ok := me.min.(time.Time); ok {
 				if value.Before(m) {
-					return false
+					return fmt.Errorf("%s %s is not > %s", fieldName, value,
+						m)
 				}
 			}
 		}
 		if me.max != nil {
 			if m, ok := me.max.(time.Time); ok {
 				if value.After(m) {
-					return false
+					return fmt.Errorf("%s %s is not < %s", fieldName, value,
+						m)
 				}
 			}
 		}
 	case int:
 		if me.kind != IntKind {
-			return false
+			return fmt.Errorf("%s should be type %s", fieldName, IntKind)
 		}
 		if me.inInts != nil {
 			if me.inInts.Contains(value) {
-				return true
+				return fmt.Errorf("%s should be in %v", fieldName,
+					me.inInts.ToSortedSlice())
 			}
 		}
 		if me.min != nil {
 			if m, ok := me.min.(int); ok {
 				if value < m {
-					return false
+					return fmt.Errorf("%s %d is not > %d", fieldName, value,
+						m)
 				}
 			}
 		}
 		if me.max != nil {
 			if m, ok := me.max.(int); ok {
 				if value > m {
-					return false
+					return fmt.Errorf("%s %d is not < %d", fieldName, value,
+						m)
 				}
 			}
 		}
 	case float64:
 		if me.kind != RealKind {
-			return false
+			return fmt.Errorf("%s should be type %s", fieldName, RealKind)
 		}
 		if me.min != nil {
 			if m, ok := me.min.(float64); ok {
 				if value < m {
-					return false
+					return fmt.Errorf("%s %g is not > %g", fieldName, value,
+						m)
 				}
 			}
 		}
 		if me.max != nil {
 			if m, ok := me.max.(float64); ok {
 				if value > m {
-					return false
+					return fmt.Errorf("%s %g is not < %g", fieldName, value,
+						m)
 				}
 			}
 		}
 	case string:
 		if me.kind != StrKind {
-			return false
+			return fmt.Errorf("%s should be type %s", fieldName, StrKind)
 		}
 		if me.inStrs != nil {
 			if me.inStrs.Contains(value) {
-				return true
+				return fmt.Errorf("%s should be in %v", fieldName,
+					me.inStrs.ToSortedSlice())
 			}
 		}
 		size := utf8.RuneCountInString(value)
 		if me.min != nil {
 			if m, ok := me.min.(int); ok {
 				if size < m {
-					return false
+					return fmt.Errorf("%s %q is not > %d", fieldName, value,
+						m)
 				}
 			}
 		}
 		if me.max != nil {
 			if m, ok := me.max.(int); ok {
 				if size > m {
-					return false
+					return fmt.Errorf("%s %q is not < %d", fieldName, value,
+						m)
 				}
 			}
 		}
 	}
-	return false
+	return nil
 }
 
 func checkNumericKind(kind FieldKind, x any, what string) error {
