@@ -4,6 +4,9 @@
 # ~/app/uxf/py/uxf.py
 
 tdb.go # see xml Marshal & Unmarshal
+metadata.go
+fieldkind.go
+fieldflag.go
 # see /home/mark/opt/go/src/encoding/xml/marshal.go
 consts.go
 eg/csv.go # Learning Go eg
@@ -14,5 +17,10 @@ bin/tdb.go # TODO tdb compare format lint
 convert/tdbconvert.go # TODO tdb ↔ sqlite csv uxf json etc.
 
 README.md
+
+eg/classic.tdb
+eg/db2.tdb
+eg/db1.tdb
+eg/csv.tdb
 
 st.sh

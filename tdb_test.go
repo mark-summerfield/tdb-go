@@ -1,8 +1,9 @@
-package tdb
+package tdb_test
 
 import (
 	"encoding/hex"
 	"fmt"
+	"github.com/mark-summerfield/tdb"
 	"testing"
 	"time"
 	// "github.com/mark-summerfield/gong"
@@ -23,7 +24,7 @@ func Test001(t *testing.T) {
 	TdbDatabase.Customers[0].Icon = icon
 	fmt.Println("======= Tdb example data ======")
 	fmt.Println(TdbDatabase)
-	raw, err := Marshal(TdbDatabase)
+	raw, err := tdb.Marshal(TdbDatabase)
 	if err != nil {
 		t.Error(err)
 	}
@@ -34,13 +35,13 @@ func Test001(t *testing.T) {
 	raw = []byte(TdbText)
 	fmt.Println(string(raw))
 	var database Database
-	err = Unmarshal(raw, &database)
+	err = tdb.Unmarshal(raw, &database)
 	if err != nil {
 		t.Error(err)
 	}
 	fmt.Println("========== Database ===========")
 	fmt.Println(database)
-	raw, err = Marshal(database)
+	raw, err = tdb.Marshal(database)
 	if err != nil {
 		t.Error(err)
 	}

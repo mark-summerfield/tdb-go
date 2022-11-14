@@ -17,7 +17,16 @@ const TdbVersion = "1"
 // Marshal converts the given struct to a string (as raw UTF-8-encoded
 // bytes) in Tdb format.
 func Marshal(v any) ([]byte, error) {
-	// The format to use is: [ TDEF \n % \n (ROW \n)* ] \n
+	// The format to use is:
+	// [tablename
+	//   fieldname1 constraints1
+	//		:
+	//   fieldnameN constraintsN
+	// %
+	// row0field0 ... row0fieldN
+	//		:
+	// rowMfield0 ... rowMfieldN
+	// ]
 	return nil, nil // TODO
 }
 
