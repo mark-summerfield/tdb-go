@@ -9,10 +9,11 @@ type (
 )
 
 const (
-	eWrongType      ErrorCode = iota + 100
-	eInvalidLength            // 101
-	eInvalidDefault           // 102
-	eInvalidRef               // 103
+	eWrongType       ErrorCode = iota + 100
+	eInvalidLength             // 101
+	eInvalidDefault            // 102
+	eInvalidRef                // 103
+	eInvalidDatabase           // 104
 
 	wInvalidNull      WarningCode = iota + 500
 	wWrongType                    // 501

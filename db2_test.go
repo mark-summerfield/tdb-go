@@ -24,7 +24,7 @@ func TestDb2(t *testing.T) {
 	db := makeDb(t)
 	fmt.Println("======= Tdb example data ======")
 	fmt.Println(db)
-	check(&db)
+	check(db, t)
 	raw, err := tdb.Marshal(db)
 	if err != nil {
 		t.Error(err)
@@ -42,7 +42,7 @@ func TestDb2(t *testing.T) {
 	}
 	fmt.Println("========== Database ===========")
 	fmt.Println(database)
-	check(&database)
+	check(database, t)
 	raw, err = tdb.Marshal(database)
 	if err != nil {
 		t.Error(err)
@@ -53,10 +53,12 @@ func TestDb2(t *testing.T) {
 	fmt.Println("===============================")
 }
 
-func check(db *Database) {
+func check(db Database, t *testing.T) {
 	fmt.Println("========= Tdb warnings ========")
-	warnings := tdb.Check(db)
-	if len(warnings) > 0 {
+	warnings, err := tdb.Check(db)
+	if err != nil {
+		t.Error(err)
+	} else if len(warnings) > 0 {
 		for _, warning := range warnings {
 			fmt.Println(warning)
 		}
@@ -67,9 +69,9 @@ func check(db *Database) {
 
 type Database struct {
 	tdb.MetaData `tdb:"MetaData"`
-	Customers    []Customer `tdb:"Customer"`
-	Invoices     []Invoice  `tdb:"Invoice"`
-	LineItems    []LineItem `tdb:"LineItem"`
+	Customers    []Customer `tdb:"Customers"`
+	Invoices     []Invoice  `tdb:"Invoices"`
+	LineItems    []LineItem `tdb:"LineItems"`
 }
 
 type Customer struct {

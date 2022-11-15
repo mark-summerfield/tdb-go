@@ -5,8 +5,8 @@ package tdb
 
 import (
 	_ "embed"
-	//"fmt"
-	//"reflect"
+	"fmt"
+	"reflect"
 )
 
 //go:embed Version.dat
@@ -48,7 +48,7 @@ func Unmarshal(data []byte, db any) error {
 // Check reads the metadata and data from a database struct and returns a
 // (possibly empty) list of strings: each string is a warning (e.g.,
 // an int out of range).
-func Check(db any) []string {
+func Check(db any) ([]string, error) {
 	// TODO Iterate over all the data tables and for every field value call
 	// the corresponding metafield's check() method with the value.
 	// TODO In addition, within each table, check for uniqueness where
@@ -56,5 +56,31 @@ func Check(db any) []string {
 	// TODO In addition, check ref values to see that their referrent
 	// exists, is not to themselves, and has the same int or str type as
 	// themselves.
-	return nil
+	dbVal := reflect.ValueOf(db)
+	if dbVal.Kind() != reflect.Struct {
+		return nil, fmt.Errorf("error#%d: invalid database struct, got %v",
+			eInvalidDatabase, db)
+	}
+	tableNames := make([]string, 0, 1)
+	tableIndexes := make([]int, 0, 1)
+	metaIndex := -1
+	dbType := dbVal.Type()
+	var metadata any
+	for i := 0; i < dbType.NumField(); i++ {
+		field := dbType.Field(i)
+		if tag, ok := field.Tag.Lookup("tdb"); ok {
+			if tag == "MetaData" {
+				metadata = nil // TODO should be the metadata!
+				metaIndex = i
+			} else {
+				tableNames = append(tableNames, tag)
+				tableIndexes = append(tableIndexes, i)
+			}
+		}
+		//fmt.Printf("\t%T %v\n", field, field)
+	}
+	fmt.Println(metaIndex, metadata)
+	fmt.Println(tableNames)
+	fmt.Println(tableIndexes)
+	return nil, nil
 }
