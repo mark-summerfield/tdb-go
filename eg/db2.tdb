@@ -24,8 +24,8 @@
   LIID int unique min 1
   INUM int ref Invoices.INUM
   Delivery_Date date
-  Unit_Price real
-  Quantity int
+  Unit_Price real min 0
+  Quantity int min 0
   Description str?
 %
 1839 152 2022-01-16 29.99 2 <Bales of &lt;hay&gt;> 

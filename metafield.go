@@ -8,7 +8,6 @@ import (
 	"github.com/mark-summerfield/gset"
 	"strings"
 	"time"
-	"unicode/utf8"
 )
 
 func BoolField(name string) MetaField {
@@ -94,12 +93,13 @@ func (me *MetaField) SetDefault(theDefault any) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("%v is not a valid default for a field of type %s",
-		theDefault, me.kind)
+	return fmt.Errorf(
+		"error#%d:%v is not a valid default for a field of type %s",
+		eInvalidDefault, theDefault, me.kind)
 }
 
 func (me *MetaField) SetMin(min any) error {
-	if err := checkNumericKind(me.kind, min, "min"); err != nil {
+	if err := validMinOrMax(me.kind, min, "min"); err != nil {
 		return err
 	}
 	me.min = min
@@ -107,7 +107,7 @@ func (me *MetaField) SetMin(min any) error {
 }
 
 func (me *MetaField) SetMax(max any) error {
-	if err := checkNumericKind(me.kind, max, "max"); err != nil {
+	if err := validMinOrMax(me.kind, max, "max"); err != nil {
 		return err
 	}
 	me.max = max
@@ -134,7 +134,8 @@ func (me *MetaField) SetInStrs(ints ...string) {
 
 func (me *MetaField) SetRef(ref string) error {
 	if !strings.Contains(ref, ".") && ref == me.name {
-		return fmt.Errorf("cannot set a field ref to itself (%s)", ref)
+		return fmt.Errorf("error#%d:cannot set a field ref to itself (%s)",
+			eInvalidRef, ref)
 	}
 	// TODO check identifer.identifer or .identifer
 	me.ref = ref
@@ -193,164 +194,33 @@ func (me MetaField) IsUnique() bool {
 	return me.flag.isUnique()
 }
 
-func (me MetaField) warnings(fieldName string, value any) []string {
-	result := make([]string, 0)
-	switch value := value.(type) {
-	case bool:
-		if me.kind != BoolKind {
-			result = append(result, fmt.Sprintf("%s should be type %s",
-				fieldName, BoolKind))
-			return result
-		}
-	case []byte:
-		if me.kind != BytesKind {
-			result = append(result, fmt.Sprintf("%s should be type %s",
-				fieldName, BytesKind))
-		}
-		if me.min != nil {
-			if m, ok := me.min.(int); ok {
-				if len(value) <= m {
-					result = append(result, fmt.Sprintf(
-						"%s len is %d; must be at least %d", fieldName,
-						value, m))
-				}
-			}
-		}
-		if me.max != nil {
-			if m, ok := me.max.(int); ok {
-				if len(value) >= m {
-					result = append(result, fmt.Sprintf(
-						"%s len is %d; must be at most %d", fieldName,
-						value, m))
-				}
-			}
-		}
-	case time.Time:
-		if !(me.kind == DateKind || me.kind == DateTimeKind) {
-			result = append(result, fmt.Sprintf("%s should be a %s or %s",
-				fieldName, DateKind, DateTimeKind))
-		}
-		if me.min != nil {
-			if m, ok := me.min.(time.Time); ok {
-				if value.Add(-time.Second).Before(m) {
-					result = append(result, fmt.Sprintf(
-						"%s %s is not at or before %s", fieldName, value,
-						m))
-				}
-			}
-		}
-		if me.max != nil {
-			if m, ok := me.max.(time.Time); ok {
-				if value.Add(time.Second).After(m) {
-					result = append(result, fmt.Sprintf(
-						"%s %s is not at or after %s", fieldName, value, m))
-				}
-			}
-		}
-	case int:
-		if me.kind != IntKind {
-			result = append(result, fmt.Sprintf("%s should be type %s",
-				fieldName, IntKind))
-		}
-		if me.inInts != nil {
-			if me.inInts.Contains(value) {
-				result = append(result, fmt.Sprintf("%s should be in %v",
-					fieldName, me.inInts.ToSortedSlice()))
-			}
-		}
-		if me.min != nil {
-			if m, ok := me.min.(int); ok {
-				if value < m {
-					result = append(result, fmt.Sprintf(
-						"%s %d is not >= %d", fieldName, value, m))
-				}
-			}
-		}
-		if me.max != nil {
-			if m, ok := me.max.(int); ok {
-				if value > m {
-					result = append(result, fmt.Sprintf(
-						"%s %d is not <= %d", fieldName, value, m))
-				}
-			}
-		}
-	case float64:
-		if me.kind != RealKind {
-			result = append(result, fmt.Sprintf("%s should be type %s",
-				fieldName, RealKind))
-		}
-		if me.min != nil {
-			if m, ok := me.min.(float64); ok {
-				if value < m {
-					result = append(result, fmt.Sprintf(
-						"%s %g is not >= %g", fieldName, value, m))
-				}
-			}
-		}
-		if me.max != nil {
-			if m, ok := me.max.(float64); ok {
-				if value > m {
-					result = append(result, fmt.Sprintf(
-						"%s %g is not <= %g", fieldName, value, m))
-				}
-			}
-		}
-	case string:
-		if me.kind != StrKind {
-			result = append(result, fmt.Sprintf("%s should be type %s",
-				fieldName, StrKind))
-		}
-		if me.inStrs != nil {
-			if !me.inStrs.Contains(value) {
-				result = append(result, fmt.Sprintf("%s should be in %v",
-					fieldName, me.inStrs))
-			}
-		}
-		size := utf8.RuneCountInString(value)
-		if me.min != nil {
-			if m, ok := me.min.(int); ok {
-				if size < m {
-					result = append(result, fmt.Sprintf(
-						"%s %q len is %d; must be at least %d", fieldName,
-						value, size, m))
-				}
-			}
-		}
-		if me.max != nil {
-			if m, ok := me.max.(int); ok {
-				if size > m {
-					result = append(result, fmt.Sprintf(
-						"%s %q len is %d; must be at most %d", fieldName,
-						value, size, m))
-				}
-			}
-		}
-	}
-	return result
-}
-
-func checkNumericKind(kind FieldKind, x any, what string) error {
+func validMinOrMax(kind FieldKind, x any, what string) error {
 	switch x := x.(type) {
 	case int:
 		if kind == BoolKind || kind == DateKind || kind == DateTimeKind {
-			return fmt.Errorf("cannot set a %s for a %s field", what, kind)
+			return fmt.Errorf("error#%d:cannot set a %s for a %s field",
+				eWrongType, what, kind)
 		}
 		if x < 0 && (kind == BytesKind || kind == StrKind) {
-			return fmt.Errorf("cannot set a negative %s for a %s field",
-				what, kind)
+			return fmt.Errorf(
+				"error#%d:cannot set a negative %s for a %s field",
+				eInvalidLength, what, kind)
 		}
 	case float64:
 		if kind != RealKind {
-			return fmt.Errorf("cannot set a real %s for a %s field", what,
-				kind)
+			return fmt.Errorf(
+				"error#%d:cannot set a real %s for a %s field", eWrongType,
+				what, kind)
 		}
 	case time.Time:
 		if !(kind == DateKind || kind == DateTimeKind) {
-			return fmt.Errorf("cannot set a time.Time %s for a %s field",
-				what, kind)
+			return fmt.Errorf(
+				"error#%d:cannot set a time.Time %s for a %s field",
+				eWrongType, what, kind)
 		}
 	default:
-		return fmt.Errorf("cannot set a %s for a %s field", what, kind)
+		return fmt.Errorf("error#%d:cannot set a %s for a %s field",
+			eWrongType, what, kind)
 	}
 	return nil
 }

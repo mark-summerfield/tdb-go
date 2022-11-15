@@ -22,6 +22,14 @@ func (me MetaTable) Name() string {
 	return me.name
 }
 
+func (me MetaTable) FieldNames() []string {
+	result := make([]string, 0, len(me.fields))
+	for _, field := range me.fields {
+		result = append(result, field.name)
+	}
+	return result
+}
+
 func (me MetaTable) Field(index int) *MetaField {
 	return me.fields[index]
 }
@@ -48,11 +56,4 @@ func (me MetaTable) String() string {
 		s.WriteByte('\n')
 	}
 	return s.String()
-}
-
-func (me MetaTable) warnings() []string {
-	// TODO iterate over all fields and call their warnings()
-	// TODO and for any which are unique, check for uniqueness
-	// TODO and for any which are not null, check for not nullness
-	return nil
 }

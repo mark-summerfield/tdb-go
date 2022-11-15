@@ -1,20 +1,10 @@
-# (1) TODO ########################
-# consts.go
-#   wExpectedBool
-#   wExpectedBytes
-#   etc.
-# use these in metafield.go warnings()
-#  eInvalidDefault
-# use in SetDefault()
-#  eInvalidMinMax
-#  etc.
-# use in checkNumericKind()
-#
+# TODO (1) Check() tdb.go
 # ~/app/uxf/py/uxf.py
-tdb.go # see xml Marshal & Unmarshal
-metadata.go # (3) TODO switch to orderedmap for Metadata & Metatable
-metatable.go # (4) TODO switch to orderedmap for Metadata & Metatable
+tdb.go # see xml Marshal & Unmarshal & Check
+metadata.go
+metatable.go
 metafield.go
+check.go
 fieldkind.go
 fieldflag.go
 util.go
@@ -23,7 +13,8 @@ consts.go
 
 eg/csv.go # Learning Go eg
 
-tdb_test.go # (2) TODO #######################
+tdb_test.go
+db2_test.go
 
 bin/tdb.go # TODO tdb compare format lint
 convert/tdbconvert.go # TODO tdb ↔ sqlite csv uxf json etc.

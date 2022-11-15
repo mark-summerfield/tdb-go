@@ -3,10 +3,20 @@
 
 package tdb
 
-/*
-const (
-	eNotAPointer        = iota + 100
-	eNotASlice          // 101
-	eNotASliceOfStructs // 102
+type (
+	ErrorCode   int
+	WarningCode int
 )
-*/
+
+const (
+	eWrongType      ErrorCode = iota + 100
+	eInvalidLength            // 101
+	eInvalidDefault           // 102
+	eInvalidRef               // 103
+
+	wInvalidNull      WarningCode = iota + 500
+	wWrongType                    // 501
+	wValueOutOfRange              // 502
+	wValueNotAllowed              // 503
+	wLengthOutOfRange             // 504
+)
