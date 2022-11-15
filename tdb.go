@@ -65,12 +65,10 @@ func Check(db any) ([]string, error) {
 	tableIndexes := make([]int, 0, 1)
 	metaIndex := -1
 	dbType := dbVal.Type()
-	var metadata any
 	for i := 0; i < dbType.NumField(); i++ {
 		field := dbType.Field(i)
 		if tag, ok := field.Tag.Lookup("tdb"); ok {
 			if tag == "MetaData" {
-				metadata = nil // TODO should be the metadata!
 				metaIndex = i
 			} else {
 				tableNames = append(tableNames, tag)
@@ -79,7 +77,7 @@ func Check(db any) ([]string, error) {
 		}
 		//fmt.Printf("\t%T %v\n", field, field)
 	}
-	fmt.Println(metaIndex, metadata)
+	fmt.Println(metaIndex)
 	fmt.Println(tableNames)
 	fmt.Println(tableIndexes)
 	return nil, nil
