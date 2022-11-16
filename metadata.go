@@ -3,10 +3,6 @@
 
 package tdb
 
-import (
-	"strings"
-)
-
 type MetaData struct {
 	tables       []*MetaTable          // The tables in reading order
 	tableForName map[string]*MetaTable // Keys are tablenames
@@ -30,8 +26,8 @@ func (me MetaData) Table(index int) *MetaTable {
 }
 
 func (me MetaData) TableByName(tableName string) *MetaTable {
-	if t, ok := me.tableForName[tableName]; ok {
-		return t
+	if table, ok := me.tableForName[tableName]; ok {
+		return table
 	}
 	return nil
 }
@@ -39,14 +35,4 @@ func (me MetaData) TableByName(tableName string) *MetaTable {
 func (me *MetaData) Add(table MetaTable) {
 	me.tables = append(me.tables, &table)
 	me.tableForName[table.name] = &table
-}
-
-func (me MetaData) String() string {
-	var s strings.Builder
-	for _, table := range me.tables {
-		s.WriteByte('[')
-		s.WriteString(table.String())
-	}
-	s.WriteString("%\n")
-	return s.String()
 }

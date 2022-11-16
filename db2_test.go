@@ -24,7 +24,6 @@ func TestDb2(t *testing.T) {
 	db := makeDb(t)
 	fmt.Println("======= Tdb example data ======")
 	fmt.Println(db)
-	check(db, t)
 	raw, err := tdb.Marshal(db)
 	if err != nil {
 		t.Error(err)
@@ -42,7 +41,6 @@ func TestDb2(t *testing.T) {
 	}
 	fmt.Println("========== Database ===========")
 	fmt.Println(database)
-	check(database, t)
 	raw, err = tdb.Marshal(database)
 	if err != nil {
 		t.Error(err)
@@ -53,20 +51,6 @@ func TestDb2(t *testing.T) {
 	fmt.Println("===============================")
 }
 
-func check(db Database, t *testing.T) {
-	fmt.Println("========= Tdb warnings ========")
-	warnings, err := tdb.Check(db)
-	if err != nil {
-		t.Error(err)
-	} else if len(warnings) > 0 {
-		for _, warning := range warnings {
-			fmt.Println(warning)
-		}
-	} else {
-		fmt.Println("No warnings")
-	}
-}
-
 type Database struct {
 	tdb.MetaData `tdb:"MetaData"`
 	Customers    []Customer `tdb:"Customers"`
@@ -75,12 +59,12 @@ type Database struct {
 }
 
 type Customer struct {
-	Cid     int     `tdb:"CID"`
-	Company string  `tdb:"Company"`
-	Address *string `tdb:"Address"` // Pointer since nullable
-	Contact string  `tdb:"Contact"`
-	Email   string  `tdb:"Email"`
-	Icon    []byte  `tdb:"Icon"` // PNG; null indicated by nil
+	Cid     int    `tdb:"CID"`
+	Company string `tdb:"Company"`
+	Address string `tdb:"Address"`
+	Contact string `tdb:"Contact"`
+	Email   string `tdb:"Email"`
+	Icon    []byte `tdb:"Icon"`
 }
 
 type Invoice struct {
@@ -89,7 +73,7 @@ type Invoice struct {
 	Raised time.Time `tdb:"Raised_Date"`
 	Due    time.Time `tdb:"Due_Date"`
 	Paid   bool      `tdb:"Paid"`
-	Desc   *string   `tdb:"Desc"`
+	Desc   string    `tdb:"Desc"`
 }
 
 type LineItem struct {
@@ -98,7 +82,7 @@ type LineItem struct {
 	Delivered time.Time `tdb:"Delivery_Date"`
 	UnitPrice float64   `tdb:"Unit_Price"`
 	Quantity  int       `tdb:"Quantity"`
-	Desc      *string   `tdb:"Desc"`
+	Desc      string    `tdb:"Desc"`
 }
 
 func makeDb(t *testing.T) Database {
@@ -115,94 +99,60 @@ func makeDataTables(t *testing.T) Database {
 	if err != nil {
 		t.Error(err)
 	}
-	custAddress := "123 Somewhere"
-	invDesc := "COD"
-	lineDesc := []string{"Bales of <hay>", "Straps & Things",
-		"Washers (1\")"}
 	db := Database{
 		Customers: []Customer{
-			{50, "Best People", &custAddress, "John Doe", "j@doe.com", nil},
-			{19, "Supersuppliers", nil, "Jane Doe", "jane@super.com", nil},
+			{50, "Best People", "123 Somewhere", "John Doe", "j@doe.com",
+				icon},
+			{19, "Supersuppliers", tdb.StrSentinal, "Jane Doe",
+				"jane@super.com", tdb.BytesSentinal},
 		},
 		Invoices: []Invoice{
 			{152, 50, time.Date(2022,
 				time.January, 17, 0, 0, 0, 0, time.UTC),
 				time.Date(2022, time.February, 17, 0, 0, 0, 0, time.UTC),
-				false, &invDesc},
+				false, "COD"},
 			{153, 19,
 				time.Date(2022, time.January, 19, 0, 0, 0, 0, time.UTC),
 				time.Date(2022, time.February, 19, 0, 0, 0, 0, time.UTC),
-				true, nil},
+				true, tdb.StrSentinal},
 		},
 		LineItems: []LineItem{
 			{1839, 152,
 				time.Date(2022, time.January, 16, 0, 0, 0, 0, time.UTC),
-				29.99, 2, &lineDesc[0]},
+				29.99, 2, "Bales of <hay>"},
 			{1840, 152,
 				time.Date(2022, time.January, 16, 0, 0, 0, 0, time.UTC),
-				5.98, 3, &lineDesc[1]},
+				5.98, 3, "Straps & Things"},
 			{1620, 153,
 				time.Date(2022, time.January, 19, 0, 0, 0, 0, time.UTC),
-				11.5, 1, &lineDesc[2]},
+				11.5, 1, "Washers (1\")"},
 		}}
-	db.Customers[0].Icon = icon
 	return db
 }
 
 func makeCustomerMeta() tdb.MetaTable {
 	customer := tdb.NewMetaTable("Customers")
-	cid := tdb.IntField("CID")
-	cid.SetUnique()
-	_ = cid.SetMin(1)
-	customer.Add(cid)
-	customer.Add(tdb.StrField("Company"))
-	address := tdb.StrField("Address")
-	address.SetNullable()
-	customer.Add(address)
-	customer.Add(tdb.StrField("Contact"))
-	customer.Add(tdb.StrField("Email"))
-	iconField := tdb.BytesField("Icon")
-	iconField.SetNullable()
-	customer.Add(iconField)
+	customer.AddInt("CID")
+	customer.AddStr("Company", "Address", "Contact", "Email")
+	customer.AddBytes("Icon")
 	return customer
 }
 
 func makeInvoiceMeta() tdb.MetaTable {
 	invoice := tdb.NewMetaTable("Invoices")
-	inum := tdb.IntField("INUM")
-	inum.SetUnique()
-	_ = inum.SetMin(100)
-	invoice.Add(inum)
-	cid := tdb.IntField("CID")
-	_ = cid.SetRef("Customers.CID")
-	invoice.Add(cid)
-	invoice.Add(tdb.DateField("Raised_Date"))
-	invoice.Add(tdb.DateField("Due_Date"))
-	invoice.Add(tdb.BoolField("Paid"))
-	desc := tdb.StrField("Description")
-	desc.SetNullable()
-	invoice.Add(desc)
+	invoice.AddInt("INUM", "CID")
+	invoice.AddDate("Raised_Date", "Due_Date")
+	invoice.AddBool("Paid")
+	invoice.AddStr("Description")
 	return invoice
 }
 
 func makeLineItemMeta() tdb.MetaTable {
 	lineItem := tdb.NewMetaTable("LineItems")
-	liid := tdb.IntField("LIID")
-	liid.SetUnique()
-	_ = liid.SetMin(1)
-	lineItem.Add(liid)
-	inum := tdb.IntField("INUM")
-	_ = inum.SetRef("Invoices.INUM")
-	lineItem.Add(inum)
-	lineItem.Add(tdb.DateField("Delivery_Date"))
-	price := tdb.RealField("Unit_Price")
-	_ = price.SetMin(0.0)
-	lineItem.Add(price)
-	quantity := tdb.IntField("Quantity")
-	_ = quantity.SetMin(0)
-	lineItem.Add(quantity)
-	desc := tdb.StrField("Description")
-	desc.SetNullable()
-	lineItem.Add(desc)
+	lineItem.AddInt("LIID", "INUM")
+	lineItem.AddDate("Delivery_Date")
+	lineItem.AddReal("Unit_Price")
+	lineItem.AddInt("Quantity")
+	lineItem.AddStr("Description")
 	return lineItem
 }

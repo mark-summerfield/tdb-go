@@ -32,5 +32,5 @@ func (me FieldKind) String() string {
 	case StrKind:
 		return "str"
 	}
-	panic("unhandled FieldKind")
+	panic("unknown FieldKind")
 }

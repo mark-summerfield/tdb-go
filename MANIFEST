@@ -1,12 +1,9 @@
-# TODO (1) Check() tdb.go
 # ~/app/uxf/py/uxf.py
-tdb.go # see xml Marshal & Unmarshal & Check
+tdb.go # see xml Marshal & Unmarshal
 metadata.go
 metatable.go
 metafield.go
-check.go
 fieldkind.go
-fieldflag.go
 util.go
 consts.go
 # see /home/mark/opt/go/src/encoding/xml/marshal.go

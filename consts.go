@@ -3,21 +3,16 @@
 
 package tdb
 
-type (
-	ErrorCode   int
-	WarningCode int
+import "time"
+
+var (
+	BytesSentinal = []byte{0x04}
+	StrSentinal   = "\x04"
+	DateSentinal  = time.Date(1808, time.August, 8, 8, 8, 8, 0, time.UTC)
 )
 
 const (
-	eWrongType       ErrorCode = iota + 100
-	eInvalidLength             // 101
-	eInvalidDefault            // 102
-	eInvalidRef                // 103
-	eInvalidDatabase           // 104
-
-	wInvalidNull      WarningCode = iota + 500
-	wWrongType                    // 501
-	wValueOutOfRange              // 502
-	wValueNotAllowed              // 503
-	wLengthOutOfRange             // 504
+	BoolSentinal = false
+	IntSentinal  = -1808080808
+	RealSentinal = -1808080808.0808
 )

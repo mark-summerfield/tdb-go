@@ -35,8 +35,8 @@ func (me MetaTable) Field(index int) *MetaField {
 }
 
 func (me MetaTable) FieldByName(fieldName string) *MetaField {
-	if m, ok := me.fieldForName[fieldName]; ok {
-		return m
+	if field, ok := me.fieldForName[fieldName]; ok {
+		return field
 	}
 	return nil
 }
@@ -46,14 +46,55 @@ func (me *MetaTable) Add(field MetaField) {
 	me.fieldForName[field.name] = &field
 }
 
+func (me *MetaTable) AddBool(names ...string) {
+	for _, name := range names {
+		me.Add(BoolField(name))
+	}
+}
+
+func (me *MetaTable) AddBytes(names ...string) {
+	for _, name := range names {
+		me.Add(BytesField(name))
+	}
+}
+
+func (me *MetaTable) AddDate(names ...string) {
+	for _, name := range names {
+		me.Add(DateField(name))
+	}
+}
+
+func (me *MetaTable) AddDateTime(names ...string) {
+	for _, name := range names {
+		me.Add(DateTimeField(name))
+	}
+}
+
+func (me *MetaTable) AddInt(names ...string) {
+	for _, name := range names {
+		me.Add(IntField(name))
+	}
+}
+
+func (me *MetaTable) AddReal(names ...string) {
+	for _, name := range names {
+		me.Add(RealField(name))
+	}
+}
+
+func (me *MetaTable) AddStr(names ...string) {
+	for _, name := range names {
+		me.Add(StrField(name))
+	}
+}
+
 func (me MetaTable) String() string {
 	var s strings.Builder
+	s.WriteByte('[')
 	s.WriteString(me.name)
-	s.WriteByte('\n')
 	for _, field := range me.fields {
 		s.WriteByte(' ')
 		s.WriteString(field.String())
-		s.WriteByte('\n')
 	}
 	return s.String()
 }
