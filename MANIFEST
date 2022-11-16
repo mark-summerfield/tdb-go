@@ -1,14 +1,11 @@
-# ~/app/uxf/py/uxf.py
-tdb.go # see xml Marshal & Unmarshal
+# TODO refactor marshal.go
+# TODO implement unmarshal.go
+# TODO document
+tdb.go
 marshal.go
 unmarshal.go
-metadata.go
-metatable.go
-metafield.go
-fieldkind.go
 util.go
 consts.go
-# see /home/mark/opt/go/src/encoding/xml/marshal.go
 
 eg/csv.go # Learning Go eg
 

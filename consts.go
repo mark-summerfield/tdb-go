@@ -6,13 +6,15 @@ package tdb
 import "time"
 
 var (
-	BytesSentinal = []byte{0x04}
-	StrSentinal   = "\x04"
+	BytesSentinal = []byte{ByteSentinal}
 	DateSentinal  = time.Date(1808, time.August, 8, 8, 8, 8, 0, time.UTC)
 )
 
 const (
-	BoolSentinal = false
-	IntSentinal  = -1808080808
-	RealSentinal = -1808080808.0808
+	ByteSentinal        byte = 0x04
+	DateStrSentinal          = "1808-08-08"
+	DateTimeStrSentinal      = "1808-08-08T08:08:08"
+	IntSentinal              = -1808080808
+	RealSentinal             = -1808080808.0808
+	StrSentinal              = "\x04"
 )

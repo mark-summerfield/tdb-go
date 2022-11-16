@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/mark-summerfield/tdb"
+	"os"
 	"testing"
 	"time"
 )
@@ -21,44 +22,39 @@ func TestDb1(t *testing.T) {
 	}
 	fmt.Print(string(raw))
 	fmt.Println("===================================")
-	// TODO how different are they really?
 	if string(raw) != DbEg1Text {
+		_ = os.WriteFile("/tmp/1", raw, 0666)
+		_ = os.WriteFile("/tmp/2", []byte(DbEg1Text), 0666)
+		fmt.Println("wrote /tmp/[12] (actual/expected)")
+		fmt.Println("===================================")
 		t.Error("Database: raw != text")
 	}
 	/*
-		fmt.Println("======= Tdb example data ======")
-		raw, err := tdb.Marshal(db)
-		if err != nil {
-			t.Error(err)
-		}
-		if string(raw) != DbEg1Text {
-			t.Error("raw != text")
-		}
-		fmt.Println(string(raw))
-		fmt.Println("======= Tdb example text ======")
-		raw = []byte(DbEg1Text)
-		fmt.Println(string(raw))
+		// TODO
+		fmt.Println("====== Tdb Unmarshal Database =====")
 		var database Database
 		err = tdb.Unmarshal(raw, &database)
 		if err != nil {
 			t.Error(err)
 		}
-		fmt.Println("========== Database ===========")
-		fmt.Println(database)
-		raw, err = tdb.Marshal(database)
+		raw2, err = tdb.Marshal(database)
 		if err != nil {
 			t.Error(err)
 		}
-		fmt.Println("======= Tdb result text =======")
-		fmt.Println(string(raw))
-		fmt.Println("===============================")
+		if string(raw) != DbEg1Text {
+			_ = ioutil.WriteFile("/tmp/3", raw2, 0)
+			_ = ioutil.WriteFile("/tmp/4", []byte(DbEg1Text), 0)
+			fmt.Println("wrote /tmp/[12] (actual2/expected)")
+			fmt.Println("===================================")
+			t.Error("Database: raw != text")
+		}
 	*/
 }
 
 type Database struct {
 	Customers []Customer
 	Invoices  []Invoice
-	LineItems []LineItem
+	LineItems []LineItem `tdb:"Items"`
 }
 
 type Customer struct {
@@ -82,7 +78,7 @@ type Invoice struct {
 type LineItem struct {
 	Liid      int       `tdb:"LIID"`
 	Inum      int       `tdb:"INUM"`
-	Delivered time.Time `tdb:"date"`
+	Delivered time.Time `tdb:"Delivery_Date:date"`
 	UnitPrice float64   `tdb:"Unit_Price"`
 	Quantity  int
 	Desc      string `tdb:"Description"`
