@@ -6,8 +6,9 @@ package tdb
 import "time"
 
 var (
-	BytesSentinal = []byte{ByteSentinal}
-	DateSentinal  = time.Date(1808, time.August, 8, 8, 8, 8, 0, time.UTC)
+	BytesSentinal    = []byte{ByteSentinal}
+	DateSentinal     = time.Date(1808, time.August, 8, 0, 0, 0, 0, time.UTC)
+	DateTimeSentinal = time.Date(1808, time.August, 8, 8, 8, 8, 0, time.UTC)
 )
 
 const (
