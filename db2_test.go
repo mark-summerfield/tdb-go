@@ -23,7 +23,6 @@ var DbEg1Text string
 func TestDb2(t *testing.T) {
 	db := makeDb(t)
 	fmt.Println("======= Tdb example data ======")
-	fmt.Println(db)
 	raw, err := tdb.Marshal(db)
 	if err != nil {
 		t.Error(err)
@@ -31,6 +30,7 @@ func TestDb2(t *testing.T) {
 	if string(raw) != DbEg1Text {
 		t.Error("raw != text")
 	}
+	fmt.Println(string(raw))
 	fmt.Println("======= Tdb example text ======")
 	raw = []byte(DbEg1Text)
 	fmt.Println(string(raw))
@@ -45,44 +45,43 @@ func TestDb2(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	text := string(raw)
 	fmt.Println("======= Tdb result text =======")
-	fmt.Println(text)
+	fmt.Println(string(raw))
 	fmt.Println("===============================")
 }
 
 type Database struct {
 	tdb.MetaData `tdb:"MetaData"`
-	Customers    []Customer `tdb:"Customers"`
-	Invoices     []Invoice  `tdb:"Invoices"`
-	LineItems    []LineItem `tdb:"LineItems"`
+	Customers    []Customer
+	Invoices     []Invoice
+	LineItems    []LineItem
 }
 
 type Customer struct {
-	Cid     int    `tdb:"CID"`
-	Company string `tdb:"Company"`
-	Address string `tdb:"Address"`
-	Contact string `tdb:"Contact"`
-	Email   string `tdb:"Email"`
-	Icon    []byte `tdb:"Icon"`
+	Cid     int
+	Company string
+	Address string
+	Contact string
+	Email   string
+	Icon    []byte
 }
 
 type Invoice struct {
-	Inum   int       `tdb:"INUM"`
-	Cid    int       `tdb:"CID"`
-	Raised time.Time `tdb:"Raised_Date"`
-	Due    time.Time `tdb:"Due_Date"`
-	Paid   bool      `tdb:"Paid"`
-	Desc   string    `tdb:"Desc"`
+	Inum   int
+	Cid    int
+	Raised time.Time
+	Due    time.Time
+	Paid   bool
+	Desc   string
 }
 
 type LineItem struct {
-	Liid      int       `tdb:"LIID"`
-	Inum      int       `tdb:"INUM"`
-	Delivered time.Time `tdb:"Delivery_Date"`
-	UnitPrice float64   `tdb:"Unit_Price"`
-	Quantity  int       `tdb:"Quantity"`
-	Desc      string    `tdb:"Desc"`
+	Liid      int
+	Inum      int
+	Delivered time.Time
+	UnitPrice float64
+	Quantity  int
+	Desc      string
 }
 
 func makeDb(t *testing.T) Database {

@@ -4,35 +4,35 @@
 package tdb
 
 type MetaData struct {
-	tables       []*MetaTable          // The tables in reading order
-	tableForName map[string]*MetaTable // Keys are tablenames
+	Tables       []*MetaTable          // The tables in reading order
+	TableForName map[string]*MetaTable // Keys are tablenames
 }
 
 func NewMetaData() MetaData {
-	return MetaData{tables: make([]*MetaTable, 0, 1),
-		tableForName: make(map[string]*MetaTable)}
+	return MetaData{Tables: make([]*MetaTable, 0, 1),
+		TableForName: make(map[string]*MetaTable)}
 }
 
 func (me MetaData) TableNames() []string {
-	result := make([]string, 0, len(me.tables))
-	for _, table := range me.tables {
-		result = append(result, table.name)
+	result := make([]string, 0, len(me.Tables))
+	for _, table := range me.Tables {
+		result = append(result, table.Name)
 	}
 	return result
 }
 
 func (me MetaData) Table(index int) *MetaTable {
-	return me.tables[index]
+	return me.Tables[index]
 }
 
 func (me MetaData) TableByName(tableName string) *MetaTable {
-	if table, ok := me.tableForName[tableName]; ok {
+	if table, ok := me.TableForName[tableName]; ok {
 		return table
 	}
 	return nil
 }
 
 func (me *MetaData) Add(table MetaTable) {
-	me.tables = append(me.tables, &table)
-	me.tableForName[table.name] = &table
+	me.Tables = append(me.Tables, &table)
+	me.TableForName[table.Name] = &table
 }

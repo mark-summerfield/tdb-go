@@ -8,42 +8,38 @@ import (
 )
 
 type MetaTable struct {
-	name         string                // The tablename
-	fields       []*MetaField          // The fields in reading order
-	fieldForName map[string]*MetaField // Keys are fieldnames
+	Name         string                // The tablename
+	Fields       []*MetaField          // The fields in reading order
+	FieldForName map[string]*MetaField // Keys are fieldnames
 }
 
 func NewMetaTable(tablename string) MetaTable {
-	return MetaTable{name: tablename, fields: make([]*MetaField, 0, 1),
-		fieldForName: make(map[string]*MetaField)}
-}
-
-func (me MetaTable) Name() string {
-	return me.name
+	return MetaTable{Name: tablename, Fields: make([]*MetaField, 0, 1),
+		FieldForName: make(map[string]*MetaField)}
 }
 
 func (me MetaTable) FieldNames() []string {
-	result := make([]string, 0, len(me.fields))
-	for _, field := range me.fields {
-		result = append(result, field.name)
+	result := make([]string, 0, len(me.Fields))
+	for _, field := range me.Fields {
+		result = append(result, field.Name)
 	}
 	return result
 }
 
 func (me MetaTable) Field(index int) *MetaField {
-	return me.fields[index]
+	return me.Fields[index]
 }
 
 func (me MetaTable) FieldByName(fieldName string) *MetaField {
-	if field, ok := me.fieldForName[fieldName]; ok {
+	if field, ok := me.FieldForName[fieldName]; ok {
 		return field
 	}
 	return nil
 }
 
 func (me *MetaTable) Add(field MetaField) {
-	me.fields = append(me.fields, &field)
-	me.fieldForName[field.name] = &field
+	me.Fields = append(me.Fields, &field)
+	me.FieldForName[field.Name] = &field
 }
 
 func (me *MetaTable) AddBool(names ...string) {
@@ -91,8 +87,8 @@ func (me *MetaTable) AddStr(names ...string) {
 func (me MetaTable) String() string {
 	var s strings.Builder
 	s.WriteByte('[')
-	s.WriteString(me.name)
-	for _, field := range me.fields {
+	s.WriteString(me.Name)
+	for _, field := range me.Fields {
 		s.WriteByte(' ')
 		s.WriteString(field.String())
 	}

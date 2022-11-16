@@ -8,46 +8,42 @@ import (
 )
 
 func BoolField(name string) MetaField {
-	return MetaField{name: name, kind: BoolKind}
+	return MetaField{Name: name, Kind: BoolKind}
 }
 
 func BytesField(name string) MetaField {
-	return MetaField{name: name, kind: BytesKind}
+	return MetaField{Name: name, Kind: BytesKind}
 }
 
 func DateField(name string) MetaField {
-	return MetaField{name: name, kind: DateKind}
+	return MetaField{Name: name, Kind: DateKind}
 }
 
 func DateTimeField(name string) MetaField {
-	return MetaField{name: name, kind: DateTimeKind}
+	return MetaField{Name: name, Kind: DateTimeKind}
 }
 
 func IntField(name string) MetaField {
-	return MetaField{name: name, kind: IntKind}
+	return MetaField{Name: name, Kind: IntKind}
 }
 
 func RealField(name string) MetaField {
-	return MetaField{name: name, kind: RealKind}
+	return MetaField{Name: name, Kind: RealKind}
 }
 
 func StrField(name string) MetaField {
-	return MetaField{name: name, kind: StrKind}
+	return MetaField{Name: name, Kind: StrKind}
 }
 
 type MetaField struct {
-	name string
-	kind FieldKind
+	Name string
+	Kind FieldKind
 }
 
 func (me MetaField) String() string {
 	var s strings.Builder
-	s.WriteString(me.name)
+	s.WriteString(me.Name)
 	s.WriteByte(' ')
-	s.WriteString(me.kind.String())
+	s.WriteString(me.Kind.String())
 	return s.String()
-}
-
-func (me MetaField) Kind() FieldKind {
-	return me.kind
 }
