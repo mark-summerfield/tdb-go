@@ -21,7 +21,7 @@ format.
 Tdb supports the following seven built-in datatypes.
 
 |**Type**<a name="table-of-built-in-types"></a>|**Sentinal**|**Example(s)**|**Notes**|
-|-----------|----------------------|--|
+|-----------|----------------------|--|--|
 |`bool`     |`F`|`F` `T`||
 |`bytes`    |`(04)`|`(20AC 65 66 48)`|There must be an even number of case-insensitive hex digits; whitespace (spaces, newlines, etc.) optional.|
 |`date`     |`1808-08-08`   |`2022-04-01`|Basic ISO8601 YYYY-MM-DD format.|
