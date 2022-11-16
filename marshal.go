@@ -6,9 +6,16 @@ package tdb
 import (
 	"bytes"
 	"fmt"
+	"github.com/mark-summerfield/gset"
 	"reflect"
 	"strconv"
+	"time"
 )
+
+var byteSlice []byte
+var dateTime time.Time
+var byteSliceType = reflect.TypeOf(byteSlice)
+var dateTimeType = reflect.TypeOf(dateTime)
 
 // Marshal converts the given struct of slices of structs to a string (as
 // raw UTF-8-encoded bytes) in Tdb format if possible. For time.Time fields
@@ -26,10 +33,15 @@ func Marshal(db any) ([]byte, error) {
 			name := dbVal.Type().Field(i).Name
 			if field.Kind() == reflect.Slice {
 				if field.Len() > 0 {
-					marshalTable(&out, name, field.Index(0).Interface())
+					dateIndexes, err := marshalTable(&out, name,
+						field.Index(0).Interface())
+					if err != nil {
+						return nil, err
+					}
 					for i := 0; i < field.Len(); i++ {
 						record := field.Index(i).Interface()
-						if err := marshalRecord(&out, record); err != nil {
+						if err := marshalRecord(&out, record,
+							dateIndexes); err != nil {
 							// return nil, err // TODO reinstate
 						}
 					}
@@ -45,7 +57,9 @@ func Marshal(db any) ([]byte, error) {
 	return out.Bytes(), nil
 }
 
-func marshalTable(out *bytes.Buffer, name string, table any) error {
+func marshalTable(out *bytes.Buffer, name string, table any) (gset.Set[int],
+	error) {
+	dateIndexes := gset.New[int]()
 	tableVal := reflect.ValueOf(table)
 	tableType := reflect.TypeOf(table)
 	//fmt.Printf("tableVal %T %v %s %s\n", tableVal, tableVal, tableVal.Kind(), name)
@@ -54,9 +68,6 @@ func marshalTable(out *bytes.Buffer, name string, table any) error {
 	for i := 0; i < tableVal.NumField(); i++ {
 		field := tableVal.Field(i)
 		tag := tableType.Field(i).Tag.Get("tdb")
-		if tag != "" {
-			fmt.Println("TAG", tag)
-		}
 		out.WriteByte(' ')
 		out.WriteString(tableVal.Type().Field(i).Name)
 		out.WriteByte(' ')
@@ -71,20 +82,35 @@ func marshalTable(out *bytes.Buffer, name string, table any) error {
 			out.WriteString("real")
 		case reflect.String:
 			out.WriteString("str")
-		// TODO []byte
-		// TODO time.Time as Date or DateTime
+		case reflect.Slice:
+			x := field.Interface()
+			if reflect.TypeOf(x) == byteSliceType {
+				out.WriteString("bytes")
+			} else {
+				return dateIndexes, fmt.Errorf("unrecognized field type %T",
+					field)
+			}
 		default:
-			/* TODO reinstate
-			return fmt.Errorf("error#%d:unrecognized field type %T",
-				eUnrecognizedFieldType, field)
-			*/
+			x := field.Interface()
+			if reflect.TypeOf(x) == dateTimeType {
+				if tag == "date" {
+					dateIndexes.Add(i)
+					out.WriteString(tag)
+				} else {
+					out.WriteString("datetime")
+				}
+			} else {
+				return dateIndexes, fmt.Errorf("unrecognized field type %T",
+					field)
+			}
 		}
 	}
 	out.WriteString("\n%\n")
-	return nil
+	return dateIndexes, nil
 }
 
-func marshalRecord(out *bytes.Buffer, record any) error {
+func marshalRecord(out *bytes.Buffer, record any,
+	dateIndexes gset.Set[int]) error {
 	recVal := reflect.ValueOf(record)
 	//fmt.Printf("recVal %T %v %s\n", recVal, recVal, recVal.Kind())
 	sep := ""
@@ -110,11 +136,26 @@ func marshalRecord(out *bytes.Buffer, record any) error {
 			out.WriteString(strconv.FormatFloat(field.Float(), 'f', -1, 64))
 		case reflect.String:
 			out.WriteString(fmt.Sprintf("<%s>", Escape(field.String())))
-		// TODO []byte
-		// TODO time.Time as Date or DateTime
+		case reflect.Slice:
+			x := field.Interface()
+			if reflect.TypeOf(x) == byteSliceType {
+				out.WriteByte('(')
+				// TODO write bytes
+				out.WriteByte(')')
+			} else {
+				return fmt.Errorf("unrecognized field type %T", field)
+			}
 		default:
-			return fmt.Errorf("error#%d:unrecognized field type %T",
-				eUnrecognizedFieldType, field)
+			x := field.Interface()
+			if reflect.TypeOf(x) == dateTimeType {
+				if dateIndexes.Contains(i) {
+					out.WriteString("date")
+				} else {
+					out.WriteString("datetime")
+				}
+			} else {
+				return fmt.Errorf("unrecognized field type %T", field)
+			}
 		}
 		sep = " "
 	}

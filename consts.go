@@ -15,10 +15,4 @@ const (
 	BoolSentinal = false
 	IntSentinal  = -1808080808
 	RealSentinal = -1808080808.0808
-
-	eNotADatabase = iota + 100
-	eUnexpectedContent
-	eExpectedMetaData
-	eSliceWithoutMetaData
-	eUnrecognizedFieldType
 )
