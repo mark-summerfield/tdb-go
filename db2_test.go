@@ -17,8 +17,8 @@ import (
 // https://pkg.go.dev/golang.org/x/exp/slices
 // gong.IsRealClose() & gong.IsRealZero()
 
-//go:embed eg/db2.tdb
-var DbEg2Text string
+//go:embed eg/db1.tdb
+var DbEg1Text string
 
 func TestDb2(t *testing.T) {
 	db := makeDb(t)
@@ -28,11 +28,11 @@ func TestDb2(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if string(raw) != DbEg2Text {
+	if string(raw) != DbEg1Text {
 		t.Error("raw != text")
 	}
 	fmt.Println("======= Tdb example text ======")
-	raw = []byte(DbEg2Text)
+	raw = []byte(DbEg1Text)
 	fmt.Println(string(raw))
 	var database Database
 	err = tdb.Unmarshal(raw, &database)

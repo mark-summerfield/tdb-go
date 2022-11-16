@@ -19,7 +19,6 @@ convert/tdbconvert.go # TODO tdb ↔ sqlite csv uxf json etc.
 README.md
 
 eg/classic.tdb
-eg/db2.tdb
 eg/db1.tdb
 eg/csv.tdb
 
