@@ -200,7 +200,7 @@ _Notes_
   table each field name must be unique.
 - No table name or field name (i.e., no identifier) may be the same as a
   built-in constant:  
-  `bytes`, `date`, `datetime`, `F`, `int`, `real`, `str`, `T`
+  `bool`, `bytes`, `date`, `datetime`, `F`, `int`, `real`, `str`, `T`
 - A Tdb reader (writer) _must_ be able to read (write) a plain text `.tdb`
   file containing UTF-8 encoded text, and _ought_ to be able to read and
   write gzipped plain text `.tdb.gz` files.

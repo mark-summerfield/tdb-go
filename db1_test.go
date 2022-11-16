@@ -14,14 +14,14 @@ var DbEg1Text string
 
 func TestDb1(t *testing.T) {
 	db := makeDb(t)
-	fmt.Println("======= Tdb Go Data ======")
-	fmt.Println(db)
 	fmt.Println("======= Tdb Marshal Database ======")
 	raw, err := tdb.Marshal(db)
 	if err != nil {
 		t.Error(err)
 	}
-	fmt.Println(string(raw))
+	fmt.Print(string(raw))
+	fmt.Println("===================================")
+	// TODO how different are they really?
 	if string(raw) != DbEg1Text {
 		t.Error("Database: raw != text")
 	}
@@ -62,7 +62,7 @@ type Database struct {
 }
 
 type Customer struct {
-	Cid     int
+	Cid     int `tdb:"CID"`
 	Company string
 	Address string
 	Contact string
@@ -71,21 +71,21 @@ type Customer struct {
 }
 
 type Invoice struct {
-	Inum   int
-	Cid    int
-	Raised time.Time `tdb:"date"`
-	Due    time.Time `tdb:"date"`
+	Inum   int       `tdb:"INUM"`
+	Cid    int       `tdb:"CID"`
+	Raised time.Time `tdb:"Raised_Date:date"`
+	Due    time.Time `tdb:"Due_Date:date"`
 	Paid   bool
-	Desc   string
+	Desc   string `tdb:"Description"`
 }
 
 type LineItem struct {
-	Liid      int
-	Inum      int
+	Liid      int       `tdb:"LIID"`
+	Inum      int       `tdb:"INUM"`
 	Delivered time.Time `tdb:"date"`
-	UnitPrice float64
+	UnitPrice float64   `tdb:"Unit_Price"`
 	Quantity  int
-	Desc      string
+	Desc      string `tdb:"Description"`
 }
 
 func makeDb(t *testing.T) Database {

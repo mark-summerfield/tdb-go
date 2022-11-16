@@ -2,4 +2,7 @@ module github.com/mark-summerfield/tdb
 
 go 1.19
 
-require github.com/mark-summerfield/gset v0.8.0
+require (
+	github.com/mark-summerfield/gong v0.5.2
+	github.com/mark-summerfield/gset v0.8.0
+)
