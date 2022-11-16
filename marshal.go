@@ -10,73 +10,83 @@ import (
 	"strconv"
 )
 
-// Marshal converts the given database struct to a string (as raw
-// UTF-8-encoded bytes) in Tdb format. The database struct should have a
-// tdb.MetaData field and one or more slices of structs (each slice holding
-// a table's records, each struct a record's fields).
+// Marshal converts the given struct of slices of structs to a string (as
+// raw UTF-8-encoded bytes) in Tdb format if possible. For time.Time fields
+// use a tag of either `tdb:"date"` or `tdb:"datetime"` to specify the Tdb
+// field type; for all other types, the Tdb type is inferred.
 func Marshal(db any) ([]byte, error) {
-	// The format to use is:
-	// [tablename fieldname1 type1 ... fieldnameN typeN
-	// %
-	// row0field0 ... row0fieldN
-	//		:
-	// rowMfield0 ... rowMfieldN
-	// ]
 	var out bytes.Buffer
 	dbVal := reflect.ValueOf(db)
 	if dbVal.Kind() == reflect.Ptr {
 		dbVal = dbVal.Elem()
 	}
-	if dbVal.Kind() != reflect.Struct {
-		return nil, fmt.Errorf("error#%d: expected a struct", eNotADatabase)
-	}
-	tableDefs := make(map[string]string)
-	for i := 0; i < dbVal.NumField(); i++ {
-		field := dbVal.Field(i)
-		name := dbVal.Type().Field(i).Name
-		switch field.Kind() {
-		case reflect.Struct:
-			if name != "MetaData" {
-				return nil, fmt.Errorf("error#%d: expected metadata",
-					eExpectedMetaData)
-			}
-			meta := field.Interface()
-			populateTableDefs(meta, tableDefs)
-		case reflect.Slice:
-			if tableDef, ok := tableDefs[name]; ok {
-				out.WriteString(tableDef)
-				for j := 0; j < field.Len(); j++ {
-					record := field.Index(j).Interface()
-					if err := marshalRecord(&out, record); err != nil {
-						// return nil, err // TODO reinstate
+	if dbVal.Kind() == reflect.Struct {
+		for i := 0; i < dbVal.NumField(); i++ {
+			field := dbVal.Field(i)
+			name := dbVal.Type().Field(i).Name
+			if field.Kind() == reflect.Slice {
+				if field.Len() > 0 {
+					marshalTable(&out, name, field.Index(0).Interface())
+					for i := 0; i < field.Len(); i++ {
+						record := field.Index(i).Interface()
+						if err := marshalRecord(&out, record); err != nil {
+							// return nil, err // TODO reinstate
+						}
 					}
+					out.WriteString("]\n")
 				}
 			} else {
-				return nil, fmt.Errorf("error#%d: no metadata for %s",
-					eSliceWithoutMetaData, name)
+				// return nil, fmt.Errorf("cannot marshal %T", field) // TODO reinstate
 			}
-			out.WriteString("\n]\n")
-		default:
-			return nil, fmt.Errorf(
-				"error#%d: expected metadata or slices of records",
-				eUnexpectedContent)
 		}
+	} else {
+		return nil, fmt.Errorf("cannot marshal %T", dbVal)
 	}
 	return out.Bytes(), nil
 }
 
-func populateTableDefs(meta any, tableDefs map[string]string) {
-	metaVal := reflect.ValueOf(meta)
-	tables := metaVal.FieldByName("Tables")
-	for i := 0; i < tables.Len(); i++ {
-		if table, ok := tables.Index(i).Interface().(*MetaTable); ok {
-			tableDefs[table.Name] = fmt.Sprintf("%s\n%%\n", table)
+func marshalTable(out *bytes.Buffer, name string, table any) error {
+	tableVal := reflect.ValueOf(table)
+	tableType := reflect.TypeOf(table)
+	//fmt.Printf("tableVal %T %v %s %s\n", tableVal, tableVal, tableVal.Kind(), name)
+	out.WriteByte('[')
+	out.WriteString(name)
+	for i := 0; i < tableVal.NumField(); i++ {
+		field := tableVal.Field(i)
+		tag := tableType.Field(i).Tag.Get("tdb")
+		if tag != "" {
+			fmt.Println("TAG", tag)
+		}
+		out.WriteByte(' ')
+		out.WriteString(tableVal.Type().Field(i).Name)
+		out.WriteByte(' ')
+		switch field.Kind() {
+		case reflect.Bool:
+			out.WriteString("bool")
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32,
+			reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16,
+			reflect.Uint32, reflect.Uint64:
+			out.WriteString("int")
+		case reflect.Float32, reflect.Float64:
+			out.WriteString("real")
+		case reflect.String:
+			out.WriteString("str")
+		// TODO []byte
+		// TODO time.Time as Date or DateTime
+		default:
+			/* TODO reinstate
+			return fmt.Errorf("error#%d:unrecognized field type %T",
+				eUnrecognizedFieldType, field)
+			*/
 		}
 	}
+	out.WriteString("\n%\n")
+	return nil
 }
 
 func marshalRecord(out *bytes.Buffer, record any) error {
 	recVal := reflect.ValueOf(record)
+	//fmt.Printf("recVal %T %v %s\n", recVal, recVal, recVal.Kind())
 	sep := ""
 	for i := 0; i < recVal.NumField(); i++ {
 		out.WriteString(sep)
