@@ -25,14 +25,16 @@ const (
 	IntSentinal              = -1808080808
 	RealSentinal             = -1808080808.0808
 	StrSentinal              = "\x04"
+)
 
-	CannotMarshal = iota + 100
-	CannotMarshalOuter
-	CannotMarshalEmpty
-	InvalidSliceType
-	InvalidFieldType
-	InvalidSliceFieldType
-	InvalidDateTime
+const (
+	CannotMarshal         = iota + 100 // 100
+	CannotMarshalOuter                 // 101
+	CannotMarshalEmpty                 // 102
+	InvalidSliceType                   // 103
+	InvalidFieldType                   // 104
+	InvalidSliceFieldType              // 105 NOTE not sure how to test this
+	InvalidDateTime                    // 106 ditto
 )
 
 func init() {

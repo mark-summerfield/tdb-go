@@ -54,7 +54,7 @@ func Marshal(db any) ([]byte, error) {
 			}
 		}
 	} else {
-		return nil, fmt.Errorf("e%d#cannot marshal %T", CannotMarshalOuter,
+		return nil, fmt.Errorf("e%d#cannot marshal %T", CannotMarshal,
 			dbVal)
 	}
 	if out.Len() == 0 {
@@ -151,7 +151,7 @@ func marshalTableMetaData(out *bytes.Buffer, field reflect.Value, tag,
 		} else {
 			return isDate, fmt.Errorf(
 				"e%d#%s.%s:unrecognized field type %T", InvalidFieldType,
-				tableName, fieldName, field)
+				tableName, fieldName, x)
 		}
 	}
 	return isDate, nil
@@ -234,7 +234,7 @@ func marshalSliceField(out *bytes.Buffer, field reflect.Value, tableName,
 		}
 	} else {
 		return fmt.Errorf("e%d#%s.%s:unrecognized slice's field type %T",
-			InvalidSliceFieldType, tableName, fieldName, field)
+			InvalidSliceFieldType, tableName, fieldName, x)
 	}
 	return nil
 }

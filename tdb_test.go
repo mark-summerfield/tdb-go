@@ -5,15 +5,7 @@ import (
 	"github.com/mark-summerfield/tdb"
 	"regexp"
 	"testing"
-	// "github.com/mark-summerfield/gong"
-	// "golang.org/x/exp/maps"
-	// "golang.org/x/exp/slices"
 )
-
-// maps.Equal() & maps.EqualFunc() & slices.Equal() & slices.EqualFunc()
-// https://pkg.go.dev/golang.org/x/exp/maps
-// https://pkg.go.dev/golang.org/x/exp/slices
-// gong.IsRealClose() & gong.IsRealZero()
 
 func compare(n int, raw []byte, expected string, t *testing.T) {
 	actual := string(raw)
@@ -35,30 +27,93 @@ func expectError(n int, code int, err error, t *testing.T) {
 	}
 }
 
-type OneRecord struct {
-	OneField int
+type Record struct {
+	AField int
 }
-type OneDatabase struct {
-	OneTable []OneRecord
+type ADatabase struct {
+	Records []Record
 }
 
 func Test001(t *testing.T) {
-	d := OneDatabase{OneTable: []OneRecord{{2}, {3}, {5}}}
+	d := ADatabase{Records: []Record{{2}, {3}, {5}}}
 	raw, err := tdb.Marshal(d)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
-	compare(1, raw, "[OneTable OneField int\n%\n2\n3\n5\n]\n", t)
+	compare(1, raw, "[Records AField int\n%\n2\n3\n5\n]\n", t)
 }
 
 func Test002(t *testing.T) {
-	d := OneDatabase{}
+	d := ADatabase{}
 	_, err := tdb.Marshal(d)
 	expectError(2, tdb.CannotMarshalEmpty, err, t)
 }
 
 func Test003(t *testing.T) {
-	d := OneDatabase{OneTable: []OneRecord{}}
+	d := ADatabase{Records: []Record{}}
 	_, err := tdb.Marshal(d)
 	expectError(3, tdb.CannotMarshalEmpty, err, t)
+}
+
+func Test004(t *testing.T) {
+	type ADatabase struct {
+		ATable string
+	}
+	d := ADatabase{"one"}
+	_, err := tdb.Marshal(d)
+	expectError(3, tdb.CannotMarshalOuter, err, t)
+}
+
+func Test005(t *testing.T) {
+	d := "duh"
+	_, err := tdb.Marshal(d)
+	expectError(3, tdb.CannotMarshal, err, t)
+}
+
+func Test006(t *testing.T) {
+	type ARecord struct {
+		Names []string
+	}
+	type ADatabase struct {
+		ATable []ARecord
+	}
+	d := ADatabase{
+		ATable: []ARecord{
+			{Names: []string{"one", "two"}},
+		},
+	}
+	_, err := tdb.Marshal(d)
+	expectError(3, tdb.InvalidSliceType, err, t)
+}
+
+func Test007(t *testing.T) {
+	type ARecord struct {
+		Items complex64
+	}
+	type ADatabase struct {
+		ATable []ARecord
+	}
+	d := ADatabase{
+		ATable: []ARecord{
+			{Items: 2 + 0.5i},
+		},
+	}
+	_, err := tdb.Marshal(d)
+	expectError(3, tdb.InvalidFieldType, err, t)
+}
+
+func Test008(t *testing.T) {
+	type ARecord struct {
+		Items []complex64
+	}
+	type ADatabase struct {
+		ATable []ARecord
+	}
+	d := ADatabase{
+		ATable: []ARecord{
+			{Items: []complex64{2 + 0.5i}},
+		},
+	}
+	_, err := tdb.Marshal(d)
+	expectError(3, tdb.InvalidSliceType, err, t)
 }

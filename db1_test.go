@@ -15,40 +15,37 @@ var DbEg1Text string
 
 func TestDb1(t *testing.T) {
 	db := makeDb(t)
-	fmt.Println("======= Tdb Marshal Database ======")
 	raw, err := tdb.Marshal(db)
 	if err != nil {
 		t.Error(err)
 	}
-	fmt.Print(string(raw))
-	fmt.Println("===================================")
 	if string(raw) != DbEg1Text {
+		fmt.Println("======= Tdb Marshal Database ======")
+		fmt.Print(string(raw))
 		_ = os.WriteFile("/tmp/1", raw, 0666)
 		_ = os.WriteFile("/tmp/2", []byte(DbEg1Text), 0666)
 		fmt.Println("wrote /tmp/[12] (actual/expected)")
 		fmt.Println("===================================")
 		t.Error("Database: raw != text")
 	}
-	/*
-		// TODO
+	var database Database
+	err = tdb.Unmarshal(raw, &database)
+	if err != nil {
+		t.Error(err)
+	}
+	raw2, err := tdb.Marshal(database)
+	if err != nil {
+		t.Error(err)
+	}
+	if string(raw2) != DbEg1Text {
 		fmt.Println("====== Tdb Unmarshal Database =====")
-		var database Database
-		err = tdb.Unmarshal(raw, &database)
-		if err != nil {
-			t.Error(err)
-		}
-		raw2, err = tdb.Marshal(database)
-		if err != nil {
-			t.Error(err)
-		}
-		if string(raw) != DbEg1Text {
-			_ = ioutil.WriteFile("/tmp/3", raw2, 0)
-			_ = ioutil.WriteFile("/tmp/4", []byte(DbEg1Text), 0)
-			fmt.Println("wrote /tmp/[12] (actual2/expected)")
-			fmt.Println("===================================")
-			t.Error("Database: raw != text")
-		}
-	*/
+		fmt.Print(string(raw2))
+		_ = os.WriteFile("/tmp/3", raw2, 0666)
+		_ = os.WriteFile("/tmp/4", []byte(DbEg1Text), 0666)
+		fmt.Println("wrote /tmp/[34] (actual/expected)")
+		fmt.Println("===================================")
+		t.Error("Database: raw2 != text")
+	}
 }
 
 type Database struct {
