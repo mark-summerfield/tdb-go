@@ -3,12 +3,19 @@
 
 package tdb
 
-import "time"
+import (
+	"github.com/mark-summerfield/gset"
+	"reflect"
+	"time"
+)
 
 var (
 	BytesSentinal    = []byte{ByteSentinal}
 	DateSentinal     = time.Date(1808, time.August, 8, 0, 0, 0, 0, time.UTC)
 	DateTimeSentinal = time.Date(1808, time.August, 8, 8, 8, 8, 0, time.UTC)
+	byteSliceType    = reflect.TypeOf(BytesSentinal)
+	dateTimeType     = reflect.TypeOf(DateSentinal)
+	reservedWords    gset.Set[string]
 )
 
 const (
@@ -19,3 +26,8 @@ const (
 	RealSentinal             = -1808080808.0808
 	StrSentinal              = "\x04"
 )
+
+func init() {
+	reservedWords = gset.New("bool", "bytes", "date", "datetime", "int",
+		"real", "str")
+}

@@ -9,7 +9,7 @@ consts.go
 
 eg/csv.go # Learning Go eg
 
-tdb_test.go
+tdb_test.go # TODO tests for good + bad (all errors)
 db1_test.go
 
 bin/tdb.go # TODO tdb compare format lint
