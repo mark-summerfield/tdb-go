@@ -31,30 +31,28 @@ func Unmarshal(data []byte, db any) error {
 	metaData := make(metaDataType)
 	var err error
 	var tableName string
-	for len(data) > 0 {
+	for len(data) > 0 { // TODO refactor?
 		b := data[0]
 		data = data[1:]
 		if b == '[' {
 			if data, tableName, err = readTableMetaData(data,
 				metaData); err != nil {
+				fmt.Println("@@@@", metaData) // TODO delete
 				return err
 			}
 		} else {
 			fmt.Println("Start of Table", tableName) // TODO delete
-			if data, err = readRecords(data, metaData,
-				tableName); err != nil {
+			if data, err = readRecords(data,
+				metaData[tableName]); err != nil {
+				fmt.Println("$$$$", metaData) // TODO delete
 				return err
 			}
 			fmt.Println("End of Table", tableName) // TODO delete
 		}
 	}
-	fmt.Println(metaData) // TODO delete
-	return nil            // TODO
+	fmt.Println("####", metaData) // TODO delete
+	return nil                    // TODO
 }
-
-// Outer key is tableName, outer value is map whose keys are fieldNames
-// and whose values maps whose keys are fieldnames and values are types
-type metaDataType map[string]map[string]string
 
 func readTableMetaData(data []byte,
 	metaData metaDataType) ([]byte, string, error) {
@@ -69,7 +67,7 @@ func readTableMetaData(data []byte,
 	for i, part := range parts {
 		if i == 0 {
 			tableName = string(part)
-			metaData[tableName] = make(map[string]string)
+			metaData[tableName] = newMetaTable(tableName)
 		} else if i%2 != 0 {
 			fieldName = string(part)
 		} else {
@@ -77,7 +75,12 @@ func readTableMetaData(data []byte,
 				return data, "", fmt.Errorf("e%d#missing fieldname or type",
 					MissingFieldNameOrType)
 			}
-			metaData[tableName][fieldName] = string(part)
+			typename := string(part)
+			metaTable := metaData[tableName]
+			if err := metaTable.Add(fieldName, typename); err != nil {
+				return data, "", fmt.Errorf(
+					"e%d#invalid typename %s", InvalidTypeName, typename)
+			}
 		}
 	}
 	return data[end+1:], tableName, nil // +1 skips final %
@@ -86,53 +89,75 @@ func readTableMetaData(data []byte,
 // TODO take in a reflect.Value for the outer target struct's corresponding
 // slice
 // TODO refactor
-func readRecords(data []byte, metaData metaDataType,
-	tableName string) ([]byte, error) {
+func readRecords(data []byte, metaTable *metaTableType) ([]byte, error) {
 	var err error
 	var raw []byte
 	var s string
-	fieldCount := len(metaData[tableName])
-	fieldsSoFar := 0
+	var metaField *metaFieldType
+	fieldCount := metaTable.Len()
+	oldFieldIndex := -1
+	fieldIndex := 0
 	inRecord := false
 	for len(data) > 0 {
 		if !inRecord {
 			inRecord = true
-			fieldsSoFar = 0
+			oldFieldIndex = -1
+			fieldIndex = 0
 			fmt.Printf("Start of Record of %d fields\n", fieldCount) // TODO delete
+		}
+		if fieldIndex != oldFieldIndex {
+			oldFieldIndex = fieldIndex
+			metaField = metaTable.Field(fieldIndex)
 		}
 		b := data[0]
 		data = data[1:]
 		switch b {
 		case ' ', '\n': // ignore whitespace separators
 		case '!':
-			fmt.Printf("Got #%d: !\n", fieldsSoFar) // TODO delete
-			fieldsSoFar += 1
+			fmt.Printf("Got #%d: !\n", fieldIndex) // TODO delete
 			// TODO add sentinal value for the current field's type to
 			// current record
+			fieldIndex += 1
 		case 'F':
-			fmt.Printf("Got #%d: F\n", fieldsSoFar) // TODO delete
-			fieldsSoFar += 1
+			fmt.Printf("Got #%d: F\n", fieldIndex) // TODO delete
+			if metaField.kind != boolField {
+				return emptyBytes, fmt.Errorf("e%d#got bool, expected %s",
+					WrongType, metaField.kind)
+			}
 			// TODO add false to current record
+			fieldIndex += 1
 		case 'T':
-			fmt.Printf("Got #%d: T\n", fieldsSoFar) // TODO delete
-			fieldsSoFar += 1
+			fmt.Printf("Got #%d: T\n", fieldIndex) // TODO delete
+			if metaField.kind != boolField {
+				return emptyBytes, fmt.Errorf("e%d#got bool, expected %s",
+					WrongType, metaField.kind)
+			}
+			fieldIndex += 1
 			// TODO add true to current record
 		case '(':
 			data, raw, err = readHexBytes(data)
 			if err != nil {
-				return []byte{}, err
+				return emptyBytes, err
 			}
-			fmt.Printf("Got #%d: %v\n", fieldsSoFar, raw) // TODO delete
-			fieldsSoFar += 1
+			if metaField.kind != bytesField {
+				return emptyBytes, fmt.Errorf("e%d#got bytes, expected %s",
+					WrongType, metaField.kind)
+			}
+			fmt.Printf("Got #%d: %v\n", fieldIndex, raw) // TODO delete
 			// TODO add raw to current record
+			fieldIndex += 1
 		case '<':
 			data, s, err = readString(data)
 			if err != nil {
-				return []byte{}, err
+				return emptyBytes, err
 			}
-			fmt.Printf("Got #%d: %q\n", fieldsSoFar, s) // TODO delete
-			fieldsSoFar += 1
+			if metaField.kind != strField {
+				return emptyBytes, fmt.Errorf("e%d#got str, expected %s",
+					WrongType, metaField.kind)
+			}
+			fmt.Printf("Got #%d: %q\n", fieldIndex, s) // TODO delete
 			// TODO add string to current record
+			fieldIndex += 1
 		case '-':
 			// TODO surely we know whether to expect an int or real based on
 			// the metaData?
@@ -141,40 +166,53 @@ func readRecords(data []byte, metaData metaDataType,
 			var isInt bool
 			data, err = readNegativeNumber(data, &i, &r, &isInt)
 			if err != nil {
-				return []byte{}, err
+				return emptyBytes, err
 			}
 			if isInt {
+				if metaField.kind != intField {
+					return emptyBytes, fmt.Errorf(
+						"e%d#got int, expected %s", WrongType,
+						metaField.kind)
+				}
 				// TODO add int to current record
-				fmt.Printf("Got #%d: int %d\n", fieldsSoFar, i) // TODO delete
+				fmt.Printf("Got #%d: int %d\n", fieldIndex, i) // TODO delete
 			} else {
+				if metaField.kind != realField {
+					return emptyBytes, fmt.Errorf(
+						"e%d#got real, expected %s", WrongType,
+						metaField.kind)
+				}
 				// TODO add float to current record
-				fmt.Printf("Got #%d: real %f\n", fieldsSoFar, r) // TODO delete
+				fmt.Printf("Got #%d: real %f\n", fieldIndex, r) // TODO delete
 			}
-			fieldsSoFar += 1
+			fieldIndex += 1
 		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
+			////////////////////////////////////////////////////////////
+			// NOTE metaField.kind could be int, real, date, or datetime
 			// TODO +ve int or float or date or datetime
-			fmt.Printf("TODO #%d: parse +v int|float or date|datetime\n", fieldsSoFar) // TODO delete
-			fieldsSoFar += 1
+			fmt.Printf("TODO #%d: parse +v int|float or date|datetime\n",
+				fieldIndex) // TODO delete
+			fieldIndex += 1
 		case ']': // end of table
-			if fieldsSoFar < fieldCount {
-				return []byte{}, fmt.Errorf(
-					"e%d#incomplete record %d/%d fields", fieldsSoFar,
-					fieldCount, IncompleteRecord)
+			if fieldIndex < fieldCount {
+				return emptyBytes, fmt.Errorf(
+					"e%d#incomplete record %d/%d fields", IncompleteRecord,
+					fieldIndex+1, fieldCount)
 			} else {
 				fmt.Println("End of Table") // TODO delete
 				return data, nil
 			}
 		default:
-			return []byte{}, fmt.Errorf("e%d#invalid character %q",
+			return emptyBytes, fmt.Errorf("e%d#invalid character %q",
 				InvalidCharacter, rune(b))
 		}
-		if fieldsSoFar == fieldCount {
+		if fieldIndex == fieldCount {
 			inRecord = false
 			// TODO add field
 			fmt.Println("End of Record") // TODO delete
 		}
 	}
-	return []byte{}, fmt.Errorf("e%d#missing table termiator '['",
+	return emptyBytes, fmt.Errorf("e%d#missing table termiator '['",
 		MissingTableTerminator)
 }
 
@@ -185,11 +223,11 @@ func readHexBytes(data []byte) ([]byte, []byte, error) {
 			MissingBytesTerminator)
 	}
 	chunks := bytes.Fields(data[:end])
-	chunk := bytes.Join(chunks, []byte{})
+	chunk := bytes.Join(chunks, emptyBytes)
 	raw := make([]byte, hex.DecodedLen(len(chunk)))
 	_, err := hex.Decode(raw, chunk)
 	if err != nil {
-		return []byte{}, nil, fmt.Errorf("e%d#invalid bytes %q",
+		return emptyBytes, nil, fmt.Errorf("e%d#invalid bytes %q",
 			InvalidBytes, chunk)
 	}
 	return data[end+1:], raw, nil // +1 skips final )

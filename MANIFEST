@@ -3,6 +3,7 @@
 tdb.go
 marshal.go
 unmarshal.go
+metadata.go
 util.go
 consts.go
 

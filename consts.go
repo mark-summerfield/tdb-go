@@ -16,6 +16,7 @@ var (
 	byteSliceType    = reflect.TypeOf(BytesSentinal)
 	dateTimeType     = reflect.TypeOf(DateSentinal)
 	reservedWords    gset.Set[string]
+	emptyBytes       = []byte{}
 )
 
 const (
@@ -44,11 +45,13 @@ const (
 	InvalidInt                           // 113
 	InvalidReal                          // 114
 	InvalidCharacter                     // 115
-	MissingFieldNameOrType               // 116
-	MissingBytesTerminator               // 117
-	MissingStringTerminator              // 118
-	MissingTableTerminator               // 119
-	IncompleteRecord                     // 120
+	InvalidTypeName                      // 116
+	MissingFieldNameOrType               // 117
+	MissingBytesTerminator               // 118
+	MissingStringTerminator              // 119
+	MissingTableTerminator               // 120
+	IncompleteRecord                     // 121
+	WrongType                            // 122
 )
 
 func init() {
