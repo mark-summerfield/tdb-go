@@ -18,7 +18,7 @@ import (
 // Marshal converts the given struct of slices of structs to a string (as
 // raw UTF-8-encoded bytes) in Tdb format if possible.
 //
-// Each tablename is taken to be the outer struct's fieldname, but this can
+// Each tablename is taken from the outer struct's fieldname, but this can
 // be overridden using a tag, e.g., `tdb:"MyTableName"`.
 // For time.Time fields use a tag of either `tdb:"date"` or `tdb:"datetime"`
 // to specify the Tdb field type; for all other types, the Tdb type is
@@ -42,22 +42,14 @@ func Marshal(db any) ([]byte, error) {
 			}
 			if field.Kind() == reflect.Slice {
 				if field.Len() > 0 {
-					dateIndexes, fieldNameForIndex, err := marshalMetaData(
-						&out, tableName, field.Index(0).Interface())
-					if err != nil {
+					if err := marshalTable(&out, field,
+						tableName); err != nil {
 						return nil, err
 					}
-					for i := 0; i < field.Len(); i++ {
-						record := field.Index(i).Interface()
-						if err := marshalRecord(&out, record, dateIndexes,
-							tableName, fieldNameForIndex); err != nil {
-							return nil, err
-						}
-					}
-					out.WriteString("]\n")
 				}
 			} else {
-				return nil, fmt.Errorf("%s: cannot marshal %T", tableName,
+				return nil, fmt.Errorf(
+					"%s: cannot marshal outer struct field %T", tableName,
 					field)
 			}
 		}
@@ -65,6 +57,26 @@ func Marshal(db any) ([]byte, error) {
 		return nil, fmt.Errorf("cannot marshal %T", dbVal)
 	}
 	return out.Bytes(), nil
+}
+
+func marshalTable(out *bytes.Buffer, field reflect.Value,
+	tableName string) error {
+	if field.Len() > 0 {
+		dateIndexes, fieldNameForIndex, err := marshalMetaData(
+			out, tableName, field.Index(0).Interface())
+		if err != nil {
+			return err
+		}
+		for i := 0; i < field.Len(); i++ {
+			record := field.Index(i).Interface()
+			if err := marshalRecord(out, record, dateIndexes,
+				tableName, fieldNameForIndex); err != nil {
+				return err
+			}
+		}
+		out.WriteString("]\n")
+	}
+	return nil
 }
 
 func marshalMetaData(out *bytes.Buffer, tableName string,
@@ -83,47 +95,60 @@ func marshalMetaData(out *bytes.Buffer, tableName string,
 			tag, fieldName = parseTag(tag, fieldName)
 		}
 		fieldNameForIndex[i] = fieldName
-		out.WriteByte(' ')
-		out.WriteString(fieldName)
-		out.WriteByte(' ')
-		switch field.Kind() {
-		case reflect.Bool:
-			out.WriteString("bool")
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32,
-			reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16,
-			reflect.Uint32, reflect.Uint64:
-			out.WriteString("int")
-		case reflect.Float32, reflect.Float64:
-			out.WriteString("real")
-		case reflect.String:
-			out.WriteString("str")
-		case reflect.Slice:
-			x := field.Interface()
-			if reflect.TypeOf(x) == byteSliceType {
-				out.WriteString("bytes")
-			} else {
-				return dateIndexes, fieldNameForIndex, fmt.Errorf(
-					"%s.%s:unrecognized field type %T", tableName,
-					fieldName, field)
-			}
-		default:
-			x := field.Interface()
-			if reflect.TypeOf(x) == dateTimeType {
-				if tag == "date" {
-					dateIndexes.Add(i)
-					out.WriteString(tag)
-				} else {
-					out.WriteString("datetime")
-				}
-			} else {
-				return dateIndexes, fieldNameForIndex, fmt.Errorf(
-					"%s.%s:unrecognized field type %T", tableName,
-					fieldName, field)
-			}
+		isDate, err := marshalTableMetaData(out, field, tag, tableName,
+			fieldName)
+		if err != nil {
+			return dateIndexes, fieldNameForIndex, err
+		}
+		if isDate {
+			dateIndexes.Add(i)
 		}
 	}
 	out.WriteString("\n%\n")
 	return dateIndexes, fieldNameForIndex, nil
+}
+
+func marshalTableMetaData(out *bytes.Buffer, field reflect.Value, tag,
+	tableName, fieldName string) (bool, error) {
+	isDate := false
+	out.WriteByte(' ')
+	out.WriteString(fieldName)
+	out.WriteByte(' ')
+	switch field.Kind() {
+	case reflect.Bool:
+		out.WriteString("bool")
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32,
+		reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16,
+		reflect.Uint32, reflect.Uint64:
+		out.WriteString("int")
+	case reflect.Float32, reflect.Float64:
+		out.WriteString("real")
+	case reflect.String:
+		out.WriteString("str")
+	case reflect.Slice:
+		x := field.Interface()
+		if reflect.TypeOf(x) == byteSliceType {
+			out.WriteString("bytes")
+		} else {
+			return isDate, fmt.Errorf(
+				"%s.%s:unrecognized field slice type %T", tableName,
+				fieldName, field)
+		}
+	default:
+		x := field.Interface()
+		if reflect.TypeOf(x) == dateTimeType {
+			if tag == "date" {
+				isDate = true
+				out.WriteString(tag)
+			} else {
+				out.WriteString("datetime")
+			}
+		} else {
+			return isDate, fmt.Errorf("%s.%s:unrecognized field type %T",
+				tableName, fieldName, field)
+		}
+	}
+	return isDate, nil
 }
 
 func marshalRecord(out *bytes.Buffer, record any, dateIndexes gset.Set[int],
@@ -173,51 +198,68 @@ func marshalRecord(out *bytes.Buffer, record any, dateIndexes gset.Set[int],
 				out.WriteString(fmt.Sprintf("<%s>", Escape(s)))
 			}
 		case reflect.Slice:
-			x := field.Interface()
-			if reflect.TypeOf(x) == byteSliceType {
-				raw := field.Bytes()
-				if len(raw) == 1 && raw[0] == ByteSentinal {
-					out.WriteByte('!')
-				} else {
-					out.WriteByte('(')
-					out.WriteString(hex.EncodeToString(raw))
-					out.WriteByte(')')
-				}
-			} else {
-				fieldName := fieldNameForIndex[i]
-				return fmt.Errorf("%s.%s:unrecognized field type %T",
-					tableName, fieldName, field)
+			if err := marshalSliceField(out, field, tableName,
+				fieldNameForIndex[i]); err != nil {
+				return err
 			}
 		default:
-			x := field.Interface()
-			if d, ok := x.(time.Time); ok {
-				var s string
-				sentinal := false
-				if dateIndexes.Contains(i) {
-					s = d.Format("2006-01-02")
-					if s == DateStrSentinal {
-						sentinal = true
-					}
-				} else {
-					s = d.Format("2006-01-02T15:04:05")
-					if s == DateTimeStrSentinal {
-						sentinal = true
-					}
-				}
-				if sentinal {
-					out.WriteByte('!')
-				} else {
-					out.WriteString(s)
-				}
-			} else {
-				fieldName := fieldNameForIndex[i]
-				return fmt.Errorf("%s.%s:unrecognized field type %T",
-					tableName, fieldName, field)
+			if err := marshalDateTimeField(out, field, tableName,
+				fieldNameForIndex[i], dateIndexes.Contains(i)); err != nil {
+				return err
 			}
 		}
 		sep = " "
 	}
 	out.WriteByte('\n')
+	return nil
+}
+
+func marshalSliceField(out *bytes.Buffer, field reflect.Value, tableName,
+	fieldName string) error {
+	x := field.Interface()
+	if reflect.TypeOf(x) == byteSliceType {
+		raw := field.Bytes()
+		if len(raw) == 1 && raw[0] == ByteSentinal {
+			out.WriteByte('!')
+		} else {
+			out.WriteByte('(')
+			out.WriteString(hex.EncodeToString(raw))
+			out.WriteByte(')')
+		}
+	} else {
+		return fmt.Errorf("%s.%s:unrecognized slice's field type %T",
+			tableName, fieldName, field)
+	}
+	return nil
+}
+
+func marshalDateTimeField(out *bytes.Buffer, field reflect.Value, tableName,
+	fieldName string, isDate bool) error {
+	x := field.Interface()
+	if d, ok := x.(time.Time); ok {
+		var s string
+		sentinal := false
+		if isDate {
+			s = d.Format("2006-01-02")
+			if s == DateStrSentinal {
+				sentinal = true
+			}
+		} else {
+			s = d.Format("2006-01-02T15:04:05")
+			if s == DateTimeStrSentinal {
+				sentinal = true
+			}
+		}
+		if sentinal {
+			out.WriteByte('!')
+		} else {
+			out.WriteString(s)
+		}
+	} else {
+		return fmt.Errorf(
+			"%s.%s:unrecognized field type (expected time.Time) %T",
+			tableName, fieldName, field)
+	}
 	return nil
 }
 
@@ -232,7 +274,7 @@ func parseTag(tag, fieldName string) (string, string) {
 		left := tag[:i]
 		right := tag[i+1:]
 		if reservedWords.Contains(left) { // `tdb:type:FieldName"`
-			return left, right
+			return left, right // invalid format, but understandable
 		}
 		if reservedWords.Contains(right) { // `tdb:FieldName:type"`
 			return right, left
