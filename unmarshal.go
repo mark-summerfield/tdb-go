@@ -105,6 +105,11 @@ func readRecords(data []byte, metaTable *metaTableType) ([]byte, error) {
 			oldFieldIndex = -1
 			fieldIndex = 0
 			fmt.Printf("Start of Record of %d fields\n", fieldCount) // TODO delete
+			data = skipWs(data)
+			if len(data) == 0 {
+				return emptyBytes, fmt.Errorf("e%d#unexpected end of data",
+					UnexpectedEndOfData)
+			}
 		}
 		if fieldIndex != oldFieldIndex {
 			oldFieldIndex = fieldIndex
@@ -236,14 +241,13 @@ func readRecords(data []byte, metaTable *metaTableType) ([]byte, error) {
 			}
 			fieldIndex += 1
 		case ']': // end of table
-			if fieldIndex < fieldCount {
+			if fieldIndex > 0 && fieldIndex < fieldCount {
 				return emptyBytes, fmt.Errorf(
 					"e%d#incomplete record %d/%d fields", IncompleteRecord,
 					fieldIndex+1, fieldCount)
-			} else {
-				fmt.Println("End of Table") // TODO delete
-				return data, nil
 			}
+			fmt.Println("End of Table") // TODO delete
+			return skipWs(data[1:]), nil
 		default:
 			return emptyBytes, fmt.Errorf("e%d#invalid character %q",
 				InvalidCharacter, rune(b))
@@ -254,8 +258,7 @@ func readRecords(data []byte, metaTable *metaTableType) ([]byte, error) {
 			fmt.Println("End of Record") // TODO delete
 		}
 	}
-	return emptyBytes, fmt.Errorf("e%d#missing table termiator '['",
-		MissingTableTerminator)
+	return data, nil
 }
 
 func readHexBytes(data []byte) ([]byte, []byte, error) {

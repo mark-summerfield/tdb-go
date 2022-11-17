@@ -52,10 +52,9 @@ const (
 	MissingFieldNameOrType               // 118
 	MissingBytesTerminator               // 119
 	MissingStringTerminator              // 120
-	MissingTableTerminator               // 121
-	IncompleteRecord                     // 122
-	WrongType                            // 123
-	UnexpectedEndOfData                  // 124
+	IncompleteRecord                     // 121
+	WrongType                            // 122
+	UnexpectedEndOfData                  // 123
 )
 
 func init() {
