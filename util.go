@@ -5,6 +5,7 @@ package tdb
 
 import (
 	"github.com/mark-summerfield/gong"
+	"strings"
 	"time"
 )
 
@@ -23,6 +24,12 @@ func Escape(s string) string {
 		}
 	}
 	return string(result)
+}
+
+func Unescape(s string) string {
+	s = strings.ReplaceAll(s, "&lt;", "<")
+	s = strings.ReplaceAll(s, "&gt;", ">")
+	return strings.ReplaceAll(s, "&amp;", "&")
 }
 
 func IsSentinal(value any) bool {

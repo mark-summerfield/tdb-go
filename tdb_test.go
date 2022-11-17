@@ -1,8 +1,7 @@
-package tdb_test
+package tdb
 
 import (
 	"fmt"
-	"github.com/mark-summerfield/tdb"
 	"regexp"
 	"testing"
 )
@@ -36,7 +35,7 @@ type ADatabase struct {
 
 func Test001(t *testing.T) {
 	d := ADatabase{Records: []Record{{2}, {3}, {5}}}
-	raw, err := tdb.Marshal(d)
+	raw, err := Marshal(d)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
@@ -45,14 +44,14 @@ func Test001(t *testing.T) {
 
 func Test002(t *testing.T) {
 	d := ADatabase{}
-	_, err := tdb.Marshal(d)
-	expectError(2, tdb.CannotMarshalEmpty, err, t)
+	_, err := Marshal(d)
+	expectError(2, CannotMarshalEmpty, err, t)
 }
 
 func Test003(t *testing.T) {
 	d := ADatabase{Records: []Record{}}
-	_, err := tdb.Marshal(d)
-	expectError(3, tdb.CannotMarshalEmpty, err, t)
+	_, err := Marshal(d)
+	expectError(3, CannotMarshalEmpty, err, t)
 }
 
 func Test004(t *testing.T) {
@@ -60,14 +59,14 @@ func Test004(t *testing.T) {
 		ATable string
 	}
 	d := ADatabase{"one"}
-	_, err := tdb.Marshal(d)
-	expectError(3, tdb.CannotMarshalOuter, err, t)
+	_, err := Marshal(d)
+	expectError(3, CannotMarshalOuter, err, t)
 }
 
 func Test005(t *testing.T) {
 	d := "duh"
-	_, err := tdb.Marshal(d)
-	expectError(3, tdb.CannotMarshal, err, t)
+	_, err := Marshal(d)
+	expectError(3, CannotMarshal, err, t)
 }
 
 func Test006(t *testing.T) {
@@ -82,8 +81,8 @@ func Test006(t *testing.T) {
 			{Names: []string{"one", "two"}},
 		},
 	}
-	_, err := tdb.Marshal(d)
-	expectError(3, tdb.InvalidSliceType, err, t)
+	_, err := Marshal(d)
+	expectError(3, InvalidSliceType, err, t)
 }
 
 func Test007(t *testing.T) {
@@ -98,8 +97,8 @@ func Test007(t *testing.T) {
 			{Items: 2 + 0.5i},
 		},
 	}
-	_, err := tdb.Marshal(d)
-	expectError(3, tdb.InvalidFieldType, err, t)
+	_, err := Marshal(d)
+	expectError(3, InvalidFieldType, err, t)
 }
 
 func Test008(t *testing.T) {
@@ -114,6 +113,6 @@ func Test008(t *testing.T) {
 			{Items: []complex64{2 + 0.5i}},
 		},
 	}
-	_, err := tdb.Marshal(d)
-	expectError(3, tdb.InvalidSliceType, err, t)
+	_, err := Marshal(d)
+	expectError(3, InvalidSliceType, err, t)
 }

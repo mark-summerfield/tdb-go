@@ -28,13 +28,26 @@ const (
 )
 
 const (
-	CannotMarshal         = iota + 100 // 100
-	CannotMarshalOuter                 // 101
-	CannotMarshalEmpty                 // 102
-	InvalidSliceType                   // 103
-	InvalidFieldType                   // 104
-	InvalidSliceFieldType              // 105 NOTE not sure how to test this
-	InvalidDateTime                    // 106 ditto
+	CannotMarshal           = iota + 100 // 100
+	CannotMarshalOuter                   // 101
+	CannotMarshalEmpty                   // 102
+	InvalidSliceType                     // 103
+	InvalidFieldType                     // 104
+	InvalidSliceFieldType                // 105 NOTE not sure how to test this
+	InvalidDateTime                      // 106 ditto
+	InvalidTdb                           // 107
+	InvalidInterface                     // 108
+	InvalidPointerTarget                 // 109
+	InvalidTableDef                      // 110
+	InvalidBytes                         // 111
+	InvalidNumber                        // 112
+	InvalidInt                           // 113
+	InvalidReal                          // 114
+	InvalidCharacter                     // 115
+	MissingFieldNameOrType               // 116
+	MissingBytesTerminator               // 117
+	MissingStringTerminator              // 118
+	MissingTableTerminator               // 119
 )
 
 func init() {
