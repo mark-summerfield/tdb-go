@@ -26,6 +26,8 @@ const (
 	IntSentinal              = -1808080808
 	RealSentinal             = -1808080808.0808
 	StrSentinal              = "\x04"
+	DateFormat               = "2006-01-02"
+	DateTimeFormat           = "2006-01-02T15:04:05"
 )
 
 const (
@@ -44,14 +46,16 @@ const (
 	InvalidNumber                        // 112
 	InvalidInt                           // 113
 	InvalidReal                          // 114
-	InvalidCharacter                     // 115
-	InvalidTypeName                      // 116
-	MissingFieldNameOrType               // 117
-	MissingBytesTerminator               // 118
-	MissingStringTerminator              // 119
-	MissingTableTerminator               // 120
-	IncompleteRecord                     // 121
-	WrongType                            // 122
+	InvalidDate                          // 115
+	InvalidCharacter                     // 116
+	InvalidTypeName                      // 117
+	MissingFieldNameOrType               // 118
+	MissingBytesTerminator               // 119
+	MissingStringTerminator              // 120
+	MissingTableTerminator               // 121
+	IncompleteRecord                     // 122
+	WrongType                            // 123
+	UnexpectedEndOfData                  // 124
 )
 
 func init() {

@@ -246,12 +246,12 @@ func marshalDateTimeField(out *bytes.Buffer, field reflect.Value, tableName,
 		var s string
 		sentinal := false
 		if isDate {
-			s = d.Format("2006-01-02")
+			s = d.Format(DateFormat)
 			if s == DateStrSentinal {
 				sentinal = true
 			}
 		} else {
-			s = d.Format("2006-01-02T15:04:05")
+			s = d.Format(DateTimeFormat)
 			if s == DateTimeStrSentinal {
 				sentinal = true
 			}
