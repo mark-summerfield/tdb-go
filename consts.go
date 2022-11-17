@@ -48,6 +48,7 @@ const (
 	MissingBytesTerminator               // 117
 	MissingStringTerminator              // 118
 	MissingTableTerminator               // 119
+	IncompleteRecord                     // 120
 )
 
 func init() {
