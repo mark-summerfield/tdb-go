@@ -49,12 +49,17 @@ func Marshal(db any) ([]byte, error) {
 				}
 			} else {
 				return nil, fmt.Errorf(
-					"%s: cannot marshal outer struct field %T", tableName,
-					field)
+					"e%d#%s: cannot marshal outer struct field %T",
+					CannotMarshalOuter, tableName, field)
 			}
 		}
 	} else {
-		return nil, fmt.Errorf("cannot marshal %T", dbVal)
+		return nil, fmt.Errorf("e%d#cannot marshal %T", CannotMarshalOuter,
+			dbVal)
+	}
+	if out.Len() == 0 {
+		return nil, fmt.Errorf("e%d#cannot marshal empty data",
+			CannotMarshalEmpty)
 	}
 	return out.Bytes(), nil
 }
@@ -131,8 +136,8 @@ func marshalTableMetaData(out *bytes.Buffer, field reflect.Value, tag,
 			out.WriteString("bytes")
 		} else {
 			return isDate, fmt.Errorf(
-				"%s.%s:unrecognized field slice type %T", tableName,
-				fieldName, field)
+				"e%d#%s.%s:unrecognized field slice type %T",
+				InvalidSliceType, tableName, fieldName, field)
 		}
 	default:
 		x := field.Interface()
@@ -144,7 +149,8 @@ func marshalTableMetaData(out *bytes.Buffer, field reflect.Value, tag,
 				out.WriteString("datetime")
 			}
 		} else {
-			return isDate, fmt.Errorf("%s.%s:unrecognized field type %T",
+			return isDate, fmt.Errorf(
+				"e%d#%s.%s:unrecognized field type %T", InvalidFieldType,
 				tableName, fieldName, field)
 		}
 	}
@@ -227,8 +233,8 @@ func marshalSliceField(out *bytes.Buffer, field reflect.Value, tableName,
 			out.WriteByte(')')
 		}
 	} else {
-		return fmt.Errorf("%s.%s:unrecognized slice's field type %T",
-			tableName, fieldName, field)
+		return fmt.Errorf("e%d#%s.%s:unrecognized slice's field type %T",
+			InvalidSliceFieldType, tableName, fieldName, field)
 	}
 	return nil
 }
@@ -257,8 +263,8 @@ func marshalDateTimeField(out *bytes.Buffer, field reflect.Value, tableName,
 		}
 	} else {
 		return fmt.Errorf(
-			"%s.%s:unrecognized field type (expected time.Time) %T",
-			tableName, fieldName, field)
+			"e%d#%s.%s:unrecognized field type (expected time.Time) %T",
+			InvalidDateTime, tableName, fieldName, field)
 	}
 	return nil
 }
