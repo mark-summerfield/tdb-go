@@ -50,16 +50,14 @@ func Marshal(db any) ([]byte, error) {
 			} else {
 				return nil, fmt.Errorf(
 					"e%d#%s: cannot marshal outer struct field %T",
-					CannotMarshalOuter, tableName, field)
+					e100, tableName, field)
 			}
 		}
 	} else {
-		return nil, fmt.Errorf("e%d#cannot marshal %T", CannotMarshal,
-			dbVal)
+		return nil, fmt.Errorf("e%d#cannot marshal %T", e101, dbVal)
 	}
 	if out.Len() == 0 {
-		return nil, fmt.Errorf("e%d#cannot marshal empty data",
-			CannotMarshalEmpty)
+		return nil, fmt.Errorf("e%d#cannot marshal empty data", e102)
 	}
 	return out.Bytes(), nil
 }
@@ -137,7 +135,7 @@ func marshalTableMetaData(out *bytes.Buffer, field reflect.Value, tag,
 		} else {
 			return isDate, fmt.Errorf(
 				"e%d#%s.%s:unrecognized field slice type %T",
-				InvalidSliceType, tableName, fieldName, field)
+				e103, tableName, fieldName, field)
 		}
 	default:
 		x := field.Interface()
@@ -150,7 +148,7 @@ func marshalTableMetaData(out *bytes.Buffer, field reflect.Value, tag,
 			}
 		} else {
 			return isDate, fmt.Errorf(
-				"e%d#%s.%s:unrecognized field type %T", InvalidFieldType,
+				"e%d#%s.%s:unrecognized field type %T", e104,
 				tableName, fieldName, x)
 		}
 	}
@@ -234,7 +232,7 @@ func marshalSliceField(out *bytes.Buffer, field reflect.Value, tableName,
 		}
 	} else {
 		return fmt.Errorf("e%d#%s.%s:unrecognized slice's field type %T",
-			InvalidSliceFieldType, tableName, fieldName, x)
+			e105, tableName, fieldName, x)
 	}
 	return nil
 }
@@ -264,7 +262,7 @@ func marshalDateTimeField(out *bytes.Buffer, field reflect.Value, tableName,
 	} else {
 		return fmt.Errorf(
 			"e%d#%s.%s:unrecognized field type (expected time.Time) %T",
-			InvalidDateTime, tableName, fieldName, field)
+			e106, tableName, fieldName, field)
 	}
 	return nil
 }

@@ -42,7 +42,7 @@ func (me metaTableType) Len() int {
 func (me *metaTableType) Add(name, typename string) error {
 	kind, ok := newFieldKind(typename)
 	if !ok {
-		return fmt.Errorf("e%d#invalid typename: %s", InvalidTypeName,
+		return fmt.Errorf("e%d#invalid typename: %s", e129,
 			typename)
 	}
 	metaField := metaFieldType{name, kind}

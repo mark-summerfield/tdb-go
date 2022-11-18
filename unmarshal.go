@@ -16,18 +16,18 @@ import (
 // bytes) into a (pointer to a) database struct.
 func Unmarshal(data []byte, db any) error {
 	if len(data) < 11 {
-		return fmt.Errorf("e%d#data holds invalid Tdb text", InvalidTdb)
+		return fmt.Errorf("e%d#data holds invalid Tdb text", e107)
 	}
 	dbPtr := reflect.ValueOf(db)
 	if dbPtr.Kind() != reflect.Ptr {
 		return fmt.Errorf("e%d#target interface must be a pointer",
-			InvalidInterface)
+			e108)
 	}
 	dbVal := dbPtr.Elem()
 	if dbVal.Kind() != reflect.Struct {
 		return fmt.Errorf(
 			"e%d#target interface must be a pointer to a struct",
-			InvalidPointerTarget)
+			e109)
 	}
 	metaData := make(metaDataType)
 	var err error
@@ -60,7 +60,7 @@ func readTableMetaData(data []byte,
 	end := bytes.IndexByte(data, '%')
 	if end == -1 {
 		return data, "", fmt.Errorf(
-			"e%d#invalid table definition (missing %%)", InvalidTableDef)
+			"e%d#invalid table definition (missing %%)", e110)
 	}
 	parts := bytes.Fields(data[:end])
 	var tableName string
@@ -74,13 +74,13 @@ func readTableMetaData(data []byte,
 		} else {
 			if fieldName == "" {
 				return data, "", fmt.Errorf("e%d#missing fieldname or type",
-					MissingFieldNameOrType)
+					e111)
 			}
 			typename := string(part)
 			metaTable := metaData[tableName]
 			if err := metaTable.Add(fieldName, typename); err != nil {
 				return data, "", fmt.Errorf(
-					"e%d#invalid typename %s", InvalidTypeName, typename)
+					"e%d#invalid typename %s", e112, typename)
 			}
 		}
 	}
@@ -108,7 +108,7 @@ func readRecords(data []byte, metaTable *metaTableType) ([]byte, error) {
 			data = skipWs(data)
 			if len(data) == 0 {
 				return emptyBytes, fmt.Errorf("e%d#unexpected end of data",
-					UnexpectedEndOfData)
+					e113)
 			}
 		}
 		if fieldIndex != oldFieldIndex {
@@ -122,8 +122,7 @@ func readRecords(data []byte, metaTable *metaTableType) ([]byte, error) {
 			fmt.Printf("Expecting %s start=%q\n", metaField.kind, data[:m])
 			// TODO end delete
 		}
-		b := data[0]
-		switch b {
+		switch data[0] {
 		case ' ', '\t', '\n', '\r': // ignore whitespace separators
 			data = data[1:]
 		case '!':
@@ -135,70 +134,63 @@ func readRecords(data []byte, metaTable *metaTableType) ([]byte, error) {
 		case 'F', 'f', 'N', 'n':
 			fmt.Printf("Got #%d: F\n", fieldIndex) // TODO delete
 			if metaField.kind != boolField {
-				return emptyBytes, fmt.Errorf("e%d#got bool, expected %s",
-					WrongType, metaField.kind)
+				err = fmt.Errorf("e%d#got bool, expected %s",
+					e114, metaField.kind)
+			} else {
+				// TODO add false to current record
+				fieldIndex += 1
+				data = data[1:]
 			}
-			// TODO add false to current record
-			fieldIndex += 1
-			data = data[1:]
 		case 'T', 't', 'Y', 'y':
 			fmt.Printf("Got #%d: T\n", fieldIndex) // TODO delete
 			if metaField.kind != boolField {
-				return emptyBytes, fmt.Errorf("e%d#got bool, expected %s",
-					WrongType, metaField.kind)
+				err = fmt.Errorf("e%d#got bool, expected %s",
+					e115, metaField.kind)
+			} else {
+				// TODO add true to current record
+				fieldIndex += 1
+				data = data[1:]
 			}
-			fieldIndex += 1
-			data = data[1:]
-			// TODO add true to current record
 		case '(':
 			data, raw, err = readHexBytes(data[1:])
-			if err != nil {
-				return emptyBytes, err
+			if err == nil && metaField.kind != bytesField {
+				err = fmt.Errorf("e%d#got bytes, expected %s",
+					e116, metaField.kind)
+			} else {
+				fmt.Printf("Got #%d: %v\n", fieldIndex, raw) // TODO delete
+				// TODO add raw to current record
+				fieldIndex += 1
 			}
-			if metaField.kind != bytesField {
-				return emptyBytes, fmt.Errorf("e%d#got bytes, expected %s",
-					WrongType, metaField.kind)
-			}
-			fmt.Printf("Got #%d: %v\n", fieldIndex, raw) // TODO delete
-			// TODO add raw to current record
-			fieldIndex += 1
 		case '<':
 			data, s, err = readString(data[1:])
-			if err != nil {
-				return emptyBytes, err
+			if err == nil && metaField.kind != strField {
+				err = fmt.Errorf("e%d#got str, expected %s",
+					e117, metaField.kind)
+			} else {
+				fmt.Printf("Got #%d: %q\n", fieldIndex, s) // TODO delete
+				// TODO add string to current record
+				fieldIndex += 1
 			}
-			if metaField.kind != strField {
-				return emptyBytes, fmt.Errorf("e%d#got str, expected %s",
-					WrongType, metaField.kind)
-			}
-			fmt.Printf("Got #%d: %q\n", fieldIndex, s) // TODO delete
-			// TODO add string to current record
-			fieldIndex += 1
 		case '-':
-			// TODO surely we know whether to expect an int or real based on
-			// the metaData?
 			switch metaField.kind {
 			case intField:
 				var i int
 				data, i, err = readInt(data)
-				if err != nil {
-					return emptyBytes, err
+				if err == nil {
+					i = -i
+					// TODO add int to current record
+					fmt.Printf("Got #%d: %d\n", fieldIndex, i) // TODO delete
 				}
-				i = -i
-				fmt.Printf("Got #%d: %d\n", fieldIndex, i) // TODO delete
-			// TODO add int to current record
 			case realField:
 				var r float64
 				data, r, err = readReal(data)
-				if err != nil {
-					return emptyBytes, err
+				if err == nil {
+					r = -r
+					// TODO add real to current record
+					fmt.Printf("Got #%d: %f\n", fieldIndex, r) // TODO delete
 				}
-				r = -r
-				fmt.Printf("Got #%d: %f\n", fieldIndex, r) // TODO delete
-			// TODO add real to current record
 			default:
-				return emptyBytes, fmt.Errorf(
-					"e%d#got -, expected %s", WrongType,
+				err = fmt.Errorf("e%d#got -, expected %s", e118,
 					metaField.kind)
 			}
 			fieldIndex += 1
@@ -207,50 +199,51 @@ func readRecords(data []byte, metaTable *metaTableType) ([]byte, error) {
 			case intField:
 				var i int
 				data, i, err = readInt(data)
-				if err != nil {
-					return emptyBytes, err
+				if err == nil {
+					fmt.Printf("Got #%d: %d\n", fieldIndex, i) // TODO delete
+					// TODO add int to current record
 				}
-				fmt.Printf("Got #%d: %d\n", fieldIndex, i) // TODO delete
-			// TODO add int to current record
 			case realField:
 				var r float64
 				data, r, err = readReal(data)
-				if err != nil {
-					return emptyBytes, err
+				if err == nil {
+					fmt.Printf("Got #%d: %f\n", fieldIndex, r) // TODO delete
+					// TODO add real to current record
 				}
-				fmt.Printf("Got #%d: %f\n", fieldIndex, r) // TODO delete
-				// TODO add real to current record
 			case dateField:
 				var d time.Time
 				data, d, err = readDateTime(data, DateFormat)
-				if err != nil {
-					return emptyBytes, err
+				if err == nil {
+					fmt.Printf("Got #%d: %s\n", fieldIndex, d.Format(DateFormat)) // TODO delete
+					// TODO add date to current record
 				}
-				fmt.Printf("Got #%d: %s\n", fieldIndex, d.Format(DateFormat)) // TODO delete
 			case dateTimeField:
 				var d time.Time
 				data, d, err = readDateTime(data, DateTimeFormat)
-				if err != nil {
-					return emptyBytes, err
+				if err == nil {
+					fmt.Printf("Got #%d: %s\n", fieldIndex, d.Format(DateTimeFormat)) // TODO delete
+					// TODO add datetime to current record
 				}
-				fmt.Printf("Got #%d: %s\n", fieldIndex, d.Format(DateTimeFormat)) // TODO delete
 			default:
-				return emptyBytes, fmt.Errorf(
-					"e%d#got -, expected %s", WrongType,
+				err = fmt.Errorf("e%d#got -, expected %s", e119,
 					metaField.kind)
 			}
 			fieldIndex += 1
 		case ']': // end of table
 			if fieldIndex > 0 && fieldIndex < fieldCount {
-				return emptyBytes, fmt.Errorf(
-					"e%d#incomplete record %d/%d fields", IncompleteRecord,
+				err = fmt.Errorf(
+					"e%d#incomplete record %d/%d fields", e120,
 					fieldIndex+1, fieldCount)
+			} else {
+				fmt.Println("End of Table") // TODO delete
+				return skipWs(data[1:]), nil
 			}
-			fmt.Println("End of Table") // TODO delete
-			return skipWs(data[1:]), nil
 		default:
-			return emptyBytes, fmt.Errorf("e%d#invalid character %q",
-				InvalidCharacter, rune(b))
+			err = fmt.Errorf("e%d#invalid character %q",
+				e121, rune(data[0]))
+		}
+		if err != nil {
+			return emptyBytes, err
 		}
 		if fieldIndex == fieldCount {
 			inRecord = false
@@ -265,7 +258,7 @@ func readHexBytes(data []byte) ([]byte, []byte, error) {
 	end := bytes.IndexByte(data, ')')
 	if end == -1 {
 		return data, nil, fmt.Errorf("e%d#missing bytes terminator ')'",
-			MissingBytesTerminator)
+			e122)
 	}
 	chunks := bytes.Fields(data[:end])
 	chunk := bytes.Join(chunks, emptyBytes)
@@ -273,7 +266,7 @@ func readHexBytes(data []byte) ([]byte, []byte, error) {
 	_, err := hex.Decode(raw, chunk)
 	if err != nil {
 		return emptyBytes, nil, fmt.Errorf("e%d#invalid bytes %q",
-			InvalidBytes, chunk)
+			e123, chunk)
 	}
 	return data[end+1:], raw, nil // +1 skips final )
 }
@@ -282,7 +275,7 @@ func readString(data []byte) ([]byte, string, error) {
 	end := bytes.IndexByte(data, '>')
 	if end == -1 {
 		return data, "", fmt.Errorf("e%d#missing string terminator '>'",
-			MissingStringTerminator)
+			e124)
 	}
 	s := Unescape(string(data[:end]))
 	return data[end+1:], s, nil // +1 skips final >
@@ -295,7 +288,7 @@ func readInt(data []byte) ([]byte, int, error) {
 	}
 	x, err := strconv.ParseInt(string(raw), 10, 64)
 	if err != nil {
-		return data, 0, fmt.Errorf("e%d#invalid int", InvalidInt)
+		return data, 0, fmt.Errorf("e%d#invalid int", e125)
 	}
 	return data, int(x), nil
 }
@@ -307,7 +300,7 @@ func readReal(data []byte) ([]byte, float64, error) {
 	}
 	x, err := strconv.ParseFloat(string(raw), 64)
 	if err != nil {
-		return data, 0, fmt.Errorf("e%d#invalid real", InvalidReal)
+		return data, 0, fmt.Errorf("e%d#invalid real", e126)
 	}
 	return data, x, nil
 }
@@ -320,7 +313,7 @@ func readDateTime(data []byte, format string) ([]byte, time.Time, error) {
 	x, err := time.Parse(format, string(raw))
 	if err != nil {
 		return data, DateSentinal, fmt.Errorf("e%d#invalid date/time",
-			InvalidDate)
+			e127)
 	}
 	return data, x, nil
 }
@@ -336,7 +329,7 @@ func scan(data, valid []byte) ([]byte, []byte, error) {
 		end++
 	}
 	return emptyBytes, emptyBytes, fmt.Errorf("e%d#unexpected end of data",
-		UnexpectedEndOfData)
+		e128)
 }
 
 func skipWs(data []byte) []byte {
