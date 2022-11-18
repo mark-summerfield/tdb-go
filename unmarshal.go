@@ -185,7 +185,7 @@ func readRecords(data []byte, metaTable *metaTableType, lino *int) ([]byte,
 				if err == nil {
 					r = -r
 					// TODO add real to current record
-					fmt.Printf("    Got #%d: %f\n", fieldIndex, r) // TODO delete
+					fmt.Printf("    Got #%d: %g\n", fieldIndex, r) // TODO delete
 				}
 			default:
 				err = fmt.Errorf("e%d#%d:got -, expected %s", e118, *lino,
@@ -205,7 +205,7 @@ func readRecords(data []byte, metaTable *metaTableType, lino *int) ([]byte,
 				var r float64
 				data, r, err = readReal(data, lino)
 				if err == nil {
-					fmt.Printf("    Got #%d: %f\n", fieldIndex, r) // TODO delete
+					fmt.Printf("    Got #%d: %g\n", fieldIndex, r) // TODO delete
 					// TODO add real to current record
 				}
 			case dateField:
