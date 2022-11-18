@@ -1,4 +1,8 @@
 # TODO implement unmarshal.go
+#   For each record:
+#	- create a single struct (i.e., zero-valued);
+#	- then populate the struct field by field as parsed
+#	- and at end of record append the struct to the table slice
 # TODO document
 tdb.go
 marshal.go
