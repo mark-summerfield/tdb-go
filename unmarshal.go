@@ -35,23 +35,22 @@ func Unmarshal(data []byte, db any) error {
 		b := data[0]
 		data = data[1:]
 		if b == '[' {
-			if data, tableName, err = readTableMetaData(data,
-				metaData, &lino); err != nil {
-				fmt.Println("@@@@", metaData) // TODO delete
+			if data, tableName, err = readTableMetaData(data, metaData,
+				&lino); err != nil {
 				return err
 			}
-		} else {
+		} else if tableName != "" {
 			fmt.Println("Start of Table", tableName) // TODO delete
-			if data, err = readRecords(data,
-				metaData[tableName], &lino); err != nil {
-				fmt.Println("$$$$", metaData) // TODO delete
+			if data, err = readRecords(data, metaData[tableName],
+				&lino); err != nil {
 				return err
+			} else {
+				fmt.Println("End of Table", tableName) // TODO delete
+				tableName = ""
 			}
-			fmt.Println("End of Table", tableName) // TODO delete
 		}
 	}
-	fmt.Println("####", metaData) // TODO delete
-	return nil                    // TODO
+	return nil
 }
 
 func readTableMetaData(data []byte, metaData metaDataType,
@@ -90,8 +89,8 @@ func readTableMetaData(data []byte, metaData metaDataType,
 // TODO take in a reflect.Value for the outer target struct's corresponding
 // slice
 // TODO refactor
-func readRecords(data []byte, metaTable *metaTableType,
-	lino *int) ([]byte, error) {
+func readRecords(data []byte, metaTable *metaTableType, lino *int) ([]byte,
+	error) {
 	var err error
 	var raw []byte
 	var s string
@@ -105,11 +104,13 @@ func readRecords(data []byte, metaTable *metaTableType,
 			inRecord = true
 			oldFieldIndex = -1
 			fieldIndex = 0
-			fmt.Printf("Start of Record of %d fields\n", fieldCount) // TODO delete
 			data = skipWs(data, lino)
 			if len(data) == 0 {
 				return emptyBytes, fmt.Errorf(
 					"e%d#%d:unexpected end of data", e113, *lino)
+			}
+			if data[0] != ']' { // TODO delete
+				fmt.Printf("  Start of Record of %d fields\n", fieldCount)
 			}
 		}
 		if fieldIndex != oldFieldIndex {
@@ -123,13 +124,13 @@ func readRecords(data []byte, metaTable *metaTableType,
 		case ' ', '\t', '\r': // ignore whitespace separators
 			data = data[1:]
 		case '!':
-			fmt.Printf("Got #%d: !\n", fieldIndex) // TODO delete
+			fmt.Printf("    Got #%d: !\n", fieldIndex) // TODO delete
 			// TODO add sentinal value for the current field's type to
 			// current record
 			fieldIndex += 1
 			data = data[1:]
 		case 'F', 'f', 'N', 'n':
-			fmt.Printf("Got #%d: F\n", fieldIndex) // TODO delete
+			fmt.Printf("    Got #%d: F\n", fieldIndex) // TODO delete
 			if metaField.kind != boolField {
 				err = fmt.Errorf("e%d#%d:got bool, expected %s", e114,
 					*lino, metaField.kind)
@@ -139,7 +140,7 @@ func readRecords(data []byte, metaTable *metaTableType,
 				data = data[1:]
 			}
 		case 'T', 't', 'Y', 'y':
-			fmt.Printf("Got #%d: T\n", fieldIndex) // TODO delete
+			fmt.Printf("    Got #%d: T\n", fieldIndex) // TODO delete
 			if metaField.kind != boolField {
 				err = fmt.Errorf("e%d#%d:got bool, expected %s", e115,
 					*lino, metaField.kind)
@@ -154,7 +155,7 @@ func readRecords(data []byte, metaTable *metaTableType,
 				err = fmt.Errorf("e%d#%d:got bytes, expected %s", e116,
 					*lino, metaField.kind)
 			} else {
-				fmt.Printf("Got #%d: %v\n", fieldIndex, raw) // TODO delete
+				fmt.Printf("    Got #%d: %q\n", fieldIndex, raw) // TODO delete
 				// TODO add raw to current record
 				fieldIndex += 1
 			}
@@ -164,7 +165,7 @@ func readRecords(data []byte, metaTable *metaTableType,
 				err = fmt.Errorf("e%d#%d:got str, expected %s", e117, *lino,
 					metaField.kind)
 			} else {
-				fmt.Printf("Got #%d: %q\n", fieldIndex, s) // TODO delete
+				fmt.Printf("    Got #%d: %q\n", fieldIndex, s) // TODO delete
 				// TODO add string to current record
 				fieldIndex += 1
 			}
@@ -176,7 +177,7 @@ func readRecords(data []byte, metaTable *metaTableType,
 				if err == nil {
 					i = -i
 					// TODO add int to current record
-					fmt.Printf("Got #%d: %d\n", fieldIndex, i) // TODO delete
+					fmt.Printf("    Got #%d: %d\n", fieldIndex, i) // TODO delete
 				}
 			case realField:
 				var r float64
@@ -184,7 +185,7 @@ func readRecords(data []byte, metaTable *metaTableType,
 				if err == nil {
 					r = -r
 					// TODO add real to current record
-					fmt.Printf("Got #%d: %f\n", fieldIndex, r) // TODO delete
+					fmt.Printf("    Got #%d: %f\n", fieldIndex, r) // TODO delete
 				}
 			default:
 				err = fmt.Errorf("e%d#%d:got -, expected %s", e118, *lino,
@@ -197,28 +198,28 @@ func readRecords(data []byte, metaTable *metaTableType,
 				var i int
 				data, i, err = readInt(data, lino)
 				if err == nil {
-					fmt.Printf("Got #%d: %d\n", fieldIndex, i) // TODO delete
+					fmt.Printf("    Got #%d: %d\n", fieldIndex, i) // TODO delete
 					// TODO add int to current record
 				}
 			case realField:
 				var r float64
 				data, r, err = readReal(data, lino)
 				if err == nil {
-					fmt.Printf("Got #%d: %f\n", fieldIndex, r) // TODO delete
+					fmt.Printf("    Got #%d: %f\n", fieldIndex, r) // TODO delete
 					// TODO add real to current record
 				}
 			case dateField:
 				var d time.Time
 				data, d, err = readDateTime(data, DateFormat, lino)
 				if err == nil {
-					fmt.Printf("Got #%d: %s\n", fieldIndex, d.Format(DateFormat)) // TODO delete
+					fmt.Printf("    Got #%d: %s\n", fieldIndex, d.Format(DateFormat)) // TODO delete
 					// TODO add date to current record
 				}
 			case dateTimeField:
 				var d time.Time
 				data, d, err = readDateTime(data, DateTimeFormat, lino)
 				if err == nil {
-					fmt.Printf("Got #%d: %s\n", fieldIndex, d.Format(DateTimeFormat)) // TODO delete
+					fmt.Printf("    Got #%d: %s\n", fieldIndex, d.Format(DateTimeFormat)) // TODO delete
 					// TODO add datetime to current record
 				}
 			default:
@@ -232,7 +233,6 @@ func readRecords(data []byte, metaTable *metaTableType,
 					"e%d#%d:incomplete record %d/%d fields", e120, *lino,
 					fieldIndex+1, fieldCount)
 			} else {
-				fmt.Println("End of Table") // TODO delete
 				return skipWs(data[1:], lino), nil
 			}
 		default:
@@ -244,8 +244,8 @@ func readRecords(data []byte, metaTable *metaTableType,
 		}
 		if fieldIndex == fieldCount {
 			inRecord = false
-			// TODO add field
-			fmt.Println("End of Record") // TODO delete
+			// TODO add record (if we haven't added fields as we go?)
+			fmt.Println("  End of Record") // TODO delete
 		}
 	}
 	return data, nil
