@@ -94,11 +94,12 @@ func marshalMetaData(out *bytes.Buffer, tableName string,
 		field := tableVal.Field(i)
 		fieldName := tableVal.Type().Field(i).Name
 		tag := tableType.Field(i).Tag.Get("tdb")
+		var typeName string
 		if tag != "" {
-			fieldName, tag = parseTag(fieldName, tag)
+			fieldName, typeName = parseTag(fieldName, tag)
 		}
 		fieldNameForIndex[i] = fieldName
-		isDate, err := marshalTableMetaData(out, field, tag, tableName,
+		isDate, err := marshalTableMetaData(out, field, typeName, tableName,
 			fieldName)
 		if err != nil {
 			return dateIndexes, fieldNameForIndex, err
@@ -111,7 +112,7 @@ func marshalMetaData(out *bytes.Buffer, tableName string,
 	return dateIndexes, fieldNameForIndex, nil
 }
 
-func marshalTableMetaData(out *bytes.Buffer, field reflect.Value, tag,
+func marshalTableMetaData(out *bytes.Buffer, field reflect.Value, typeName,
 	tableName, fieldName string) (bool, error) {
 	isDate := false
 	out.WriteByte(' ')
@@ -140,9 +141,9 @@ func marshalTableMetaData(out *bytes.Buffer, field reflect.Value, tag,
 	default:
 		x := field.Interface()
 		if reflect.TypeOf(x) == dateTimeType {
-			if tag == "date" {
+			if typeName == "date" {
 				isDate = true
-				out.WriteString(tag)
+				out.WriteString(typeName)
 			} else {
 				out.WriteString("datetime")
 			}
@@ -283,6 +284,6 @@ func parseTag(fieldName, tag string) (string, string) {
 		if reservedWords.Contains(right) { // `tdb:FieldName:type"`
 			return left, right
 		}
-		return fieldName, tag // `tdb:FieldNameA:FieldNameB"`
+		return fieldName, "" // `tdb:FieldNameA:FieldNameB"`
 	}
 }
