@@ -92,10 +92,10 @@ func marshalMetaData(out *bytes.Buffer, tableName string,
 	out.WriteString(tableName)
 	for i := 0; i < tableVal.NumField(); i++ {
 		field := tableVal.Field(i)
-		tag := tableType.Field(i).Tag.Get("tdb")
 		fieldName := tableVal.Type().Field(i).Name
+		tag := tableType.Field(i).Tag.Get("tdb")
 		if tag != "" {
-			tag, fieldName = parseTag(tag, fieldName)
+			fieldName, tag = parseTag(fieldName, tag)
 		}
 		fieldNameForIndex[i] = fieldName
 		isDate, err := marshalTableMetaData(out, field, tag, tableName,
@@ -267,22 +267,22 @@ func marshalDateTimeField(out *bytes.Buffer, field reflect.Value, tableName,
 	return nil
 }
 
-func parseTag(tag, fieldName string) (string, string) {
+func parseTag(fieldName, tag string) (string, string) {
 	i := strings.IndexByte(tag, ':')
 	if i == -1 {
 		if reservedWords.Contains(tag) { // `tdb:"type"`
-			return tag, fieldName
+			return fieldName, tag
 		}
-		return tag, tag // `tdb:"FieldName"`
+		return tag, "" // `tdb:"FieldName"`
 	} else {
 		left := tag[:i]
 		right := tag[i+1:]
 		if reservedWords.Contains(left) { // `tdb:type:FieldName"`
-			return left, right // invalid format, but understandable
+			return right, left // invalid format, but understandable
 		}
 		if reservedWords.Contains(right) { // `tdb:FieldName:type"`
-			return right, left
+			return left, right
 		}
-		return "", tag // `tdb:FieldNameA:FieldNameB"`
+		return fieldName, tag // `tdb:FieldNameA:FieldNameB"`
 	}
 }
