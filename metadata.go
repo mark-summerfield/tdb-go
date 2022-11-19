@@ -4,7 +4,6 @@
 package tdb
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -39,16 +38,14 @@ func (me metaTableType) Len() int {
 	return len(me.fields)
 }
 
-func (me *metaTableType) Add(name, typename string) error {
+func (me *metaTableType) Add(name, typename string) bool {
 	kind, ok := newFieldKind(typename)
-	if !ok {
-		return fmt.Errorf("e%d#invalid typename: %s", e129,
-			typename)
+	if ok {
+		metaField := metaFieldType{name, kind}
+		me.fields = append(me.fields, &metaField)
+		me.fieldForName[name] = &metaField
 	}
-	metaField := metaFieldType{name, kind}
-	me.fields = append(me.fields, &metaField)
-	me.fieldForName[name] = &metaField
-	return nil
+	return ok
 }
 
 func (me *metaTableType) Field(index int) *metaFieldType {

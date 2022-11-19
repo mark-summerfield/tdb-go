@@ -22,7 +22,7 @@ Tdb supports the following seven built-in datatypes.
 
 |**Type**<a name="table-of-built-in-types"></a>|**Sentinal**|**Example(s)**|**Notes**|
 |-----------|----------------------|--|--|
-|`bool`     |`F`|`F` `T`|A Tdb reader should also accept 'f', 'N', 'n', 't', 'Y', 'y'|
+|`bool`     ||`F` `T`|No sentinal. A Tdb reader should also accept 'f', 'N', 'n', 't', 'Y', 'y'|
 |`bytes`    |`(04)`|`(20AC 65 66 48)`|There must be an even number of case-insensitive hex digits; whitespace (spaces, newlines, etc.) optional.|
 |`date`     |`1808-08-08`   |`2022-04-01`|Basic ISO8601 YYYY-MM-DD format.|
 |`datetime` |`1808-08-08T08:08:08`|`2022-04-01T16:11:51`|ISO8601 YYYY-MM-DDTHH[:MM[:SS]] format; 1-sec resolution no timezone support.|
@@ -31,13 +31,13 @@ Tdb supports the following seven built-in datatypes.
 |`str`      |`< >`|`<Some text which may include newlines>`|For &, <, >, use \&amp;, \&lt;, \&gt; respectively.|
 
 All fields are _not null_ and must contain a valid value of the field's
-type. Use your own or the default sentinal value (signified with `!`) for
-unknown values.
+type. Except for `bool` fields use your own or the default sentinal value
+(signified with `!`) for unknown values.
 
 Strings may not include `&`, `<` or `>`, so if they are needed, they must be
 replaced by the XML/HTML escapes `&amp;`, `&lt;`, and `&gt;` respectively.
 Strings respect any whitespace they contain, including newlines. The
-sentinal for strings is the EOT character (U+0004).
+sentinal for strings is a single EOT character (U+0004).
 
 Each field value is separated from its neighbor by whitespace, and
 conventionally records are separated by newlines. However, in practice,
@@ -73,8 +73,8 @@ Here's a Tdb equivalent:
     2022-10-02 5.89 1 <SX4-D1> <Eversure Sealant, 13-floz> 
     ]
 
-Every table starts with a table name followed by one or more fields. Each
-field consists of a field name and a type.
+Every table starts with a tablename followed by one or more fields. Each
+field consists of a fieldname and a type.
 
 Superficially this may not seem much of an improvement on CSV (apart from
 Tbd's superior string handling and strong typing), but as the next example
@@ -161,7 +161,8 @@ _This format does not currently have any implementations._
 |`real`      |`float64`|
 |`str`       |`string`|
 
-The Go library provides constants for each type's sentinal value.
+The Go library provides constants for each type's sentinal value (except for
+``bool``s for which there is no sentinal value).
 
 ## BNF
 
@@ -169,18 +170,18 @@ A Tdb file consists of one or more tables.
 
     TDB         ::= TABLE+
     TABLE       ::= OWS '[' OWS TABLEDEF OWS '%' OWS RECORD* OWS ']' OWS
-    TABLEDEF    ::= IDENFIFIER (RWS FIELDDEF)+ # IDENFIFIER is the table name
-    FIELDDEF    ::= IDENFIFIER RWS TYPE # IDENFIFIER is the field name
+    TABLEDEF    ::= IDENFIFIER (RWS FIELDDEF)+ # IDENFIFIER is the tablename
+    FIELDDEF    ::= IDENFIFIER RWS TYPE # IDENFIFIER is the fieldname
     TYPE        ::= 'bool' | 'bytes' | 'date' | 'datetime' | 'int' | 'real' | 'str'
     RECORD      ::= OWS FIELD (RWS FIELD)*
-    FIELD       ::= BOOL | BYTES | DATE | DATETIME | INT | REAL | STR | SENTINAL
+    FIELD       ::= BOOL | BYTES | DATE | DATETIME | INT | REAL | STR
     BOOL        ::= /[FfTtYyNn]/
-    BYTES       ::= '(' (OWS [A-Fa-f0-9]{2})* OWS ')'
-    DATE        ::= /\d\d\d\d-\d\d-\d\d/ # basic ISO8601 YYYY-MM-DD format
-    DATETIME    ::= /\d\d\d\d-\d\d-\d\dT\d\d(\d\d(\d\d)?)?/
-    INT         ::= /[-+]?\d+/
-    REAL        ::= # standard or scientific notation
-    STR         ::= /[<][^<>]*?[>]/ # newlines allowed, and &amp; &lt; &gt; supported i.e., XML
+    BYTES       ::= '(' (OWS [A-Fa-f0-9]{2})* OWS ')' | SENTINAL
+    DATE        ::= /\d\d\d\d-\d\d-\d\d/ | SENTINAL # basic ISO8601 YYYY-MM-DD format
+    DATETIME    ::= /\d\d\d\d-\d\d-\d\dT\d\d(\d\d(\d\d)?)?/ | SENTINAL
+    INT         ::= /[-+]?\d+/ | SENTINAL
+    REAL        ::= ... | SENTINAL # standard or scientific notation
+    STR         ::= /[<][^<>]*?[>]/ | SENTINAL # newlines allowed, and &amp; &lt; &gt; supported i.e., XML
     SENTINAL    ::= '!'
     IDENFIFIER  ::= /[_\p{L}]\w{0,31}/ # Must start with a letter or underscore; may not be a built-in constant
     OWS         ::= /[\s\n]*/
@@ -188,18 +189,18 @@ A Tdb file consists of one or more tables.
 
 _Notes_
 
-- Every field is _not null_. Use your own or the default sentinal (signified
-  with `!` for fields with an unknown value.
+- Every field is _not null_. Except for `bool` fields use your own or the
+  default sentinal (signified with `!`) for fields with an unknown value.
 - A Tdb file _must_ contain at least one table even if it is empty, i.e.,
   has no records.
 - A Tdb writer should always write ``bool``s as `F` or `T`; but a Tdb reader
   should accept any of `F`, `f`, `N`, `n`, for false, and any of `T`,
   `t`, `Y`, `y`, for true.
-- For any `.tdb` file each table name must be unique, and within each given
-  table each field name must be unique.
-- No table name or field name (i.e., no identifier) may be the same as a
-  built-in constant:  
-  `bool`, `bytes`, `date`, `datetime`, `F`, `int`, `real`, `str`, `T`
+- Within any `.tdb` file each tablename must be unique, and within each
+  table each fieldname must be unique.
+- No tablename or fieldname (i.e., no identifier) may be the same as a
+  built-in constant or `bool` value:  
+  `bool`, `bytes`, `date`, `datetime`, `f`, `F`, `int`, `n`, `N`, `real`, `str`, `t`, `T`, `y`, `Y`
 - A Tdb reader (writer) _must_ be able to read (write) a plain text `.tdb`
   file containing UTF-8 encoded text, and _ought_ to be able to read and
   write gzipped plain text `.tdb.gz` files.

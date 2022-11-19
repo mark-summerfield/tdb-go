@@ -11,6 +11,6 @@
 [Items LIID int INUM int Delivery_Date date Unit_Price real Quantity int Description str
 %
 1839 152 2022-01-16 29.99 2 <Bales of &lt;hay&gt;>
-1840 152 2022-01-16 5.98 3 <Straps &amp; Things>
-1620 153 2022-01-19 11.5 1 <Washers (1")>
+1840 152 2022-01-16 5.98 -3 <Straps &amp; Things>
+1620 153 2022-01-19 -11.5 1 <Washers (1")>
 ]

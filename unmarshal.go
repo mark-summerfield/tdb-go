@@ -15,52 +15,58 @@ import (
 // Unmarshal reads the data from the given string (as raw UTF-8-encoded
 // bytes) into a (pointer to a) database struct.
 func Unmarshal(data []byte, db any) error {
-	if len(data) < 11 {
-		return fmt.Errorf("e%d#data holds invalid Tdb text", e107)
-	}
-	dbPtr := reflect.ValueOf(db)
-	if dbPtr.Kind() != reflect.Ptr {
-		return fmt.Errorf("e%d#target interface must be a pointer", e108)
-	}
-	dbVal := dbPtr.Elem()
-	if dbVal.Kind() != reflect.Struct {
-		return fmt.Errorf(
-			"e%d#target interface must be a pointer to a struct", e109)
-	}
-	metaData := make(metaDataType)
 	var err error
+	dbPtr, dbVal, err := getDbValues(data, db)
+	fmt.Println(dbPtr, dbVal) // TODO delete
+	metaData := make(metaDataType)
 	var tableName string
 	lino := 1
 	for len(data) > 0 {
 		b := data[0]
 		data = data[1:]
 		if b == '[' {
-			if data, tableName, err = readTableMetaData(data, metaData,
-				&lino); err != nil {
-				return err
-			}
+			data, tableName, err = readTableMetaData(data, metaData, &lino)
 		} else if tableName != "" {
 			fmt.Println("Start of Table", tableName) // TODO delete
 			if data, err = readRecords(data, metaData[tableName],
-				&lino); err != nil {
-				return err
-			} else {
+				&lino); err == nil {
 				fmt.Println("End of Table", tableName) // TODO delete
 				tableName = ""
 			}
+		}
+		if err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
+func getDbValues(data []byte, db any) (reflect.Value, reflect.Value,
+	error) {
+	zero := reflect.Zero(reflect.TypeOf(false))
+	if len(data) < 11 {
+		return zero, zero, fmt.Errorf("e%d#data holds invalid Tdb text",
+			e107)
+	}
+	dbPtr := reflect.ValueOf(db)
+	if dbPtr.Kind() != reflect.Ptr {
+		return zero, zero, fmt.Errorf(
+			"e%d#target interface must be a pointer", e108)
+	}
+	dbVal := dbPtr.Elem()
+	if dbVal.Kind() != reflect.Struct {
+		return zero, zero, fmt.Errorf(
+			"e%d#target interface must be a pointer to a struct", e109)
+	}
+	return dbPtr, dbVal, nil
+}
+
 func readTableMetaData(data []byte, metaData metaDataType,
 	lino *int) ([]byte, string, error) {
-	end := bytes.IndexByte(data, '%')
-	if end == -1 {
-		return data, "", fmt.Errorf(
-			"e%d#%d:invalid table definition (missing %%)", e110, *lino)
+	end, err := scanToByte(data, '%', lino)
+	if err != nil {
+		return data, "", err
 	}
-	*lino += bytes.Count(data[:end], []byte{'\n'})
 	parts := bytes.Fields(data[:end])
 	var tableName string
 	var fieldName string
@@ -71,47 +77,43 @@ func readTableMetaData(data []byte, metaData metaDataType,
 		} else if i%2 != 0 {
 			fieldName = string(part)
 		} else {
-			if fieldName == "" {
-				return data, "", fmt.Errorf(
-					"e%d#%d:missing fieldname or type", e111, *lino)
+			if err := addField(fieldName, string(part), metaData[tableName],
+				lino); err != nil {
+				return data, "", err
 			}
-			typename := string(part)
-			metaTable := metaData[tableName]
-			if err := metaTable.Add(fieldName, typename); err != nil {
-				return data, "", fmt.Errorf(
-					"e%d#%d:invalid typename %s", e112, *lino, typename)
-			}
+
 		}
 	}
 	return data[end+1:], tableName, nil // +1 skips final %
 }
 
+func addField(fieldName, typeName string, metaTable *metaTableType,
+	lino *int) error {
+	if fieldName == "" {
+		return fmt.Errorf("e%d#%d:missing fieldname or type", e111, *lino)
+	}
+	if ok := metaTable.Add(fieldName, typeName); !ok {
+		return fmt.Errorf("e%d#%d:invalid typename %s", e112, *lino,
+			typeName)
+	}
+	return nil
+}
+
 // TODO take in a reflect.Value for the outer target struct's corresponding
 // slice
-// TODO refactor
 func readRecords(data []byte, metaTable *metaTableType, lino *int) ([]byte,
 	error) {
 	var err error
-	var raw []byte
-	var s string
 	var metaField *metaFieldType
 	fieldCount := metaTable.Len()
+	inRecord := false
 	oldFieldIndex := -1
 	fieldIndex := 0
-	inRecord := false
 	for len(data) > 0 {
-		if !inRecord {
-			inRecord = true
-			oldFieldIndex = -1
-			fieldIndex = 0
-			data = skipWs(data, lino)
-			if len(data) == 0 {
-				return emptyBytes, fmt.Errorf(
-					"e%d#%d:unexpected end of data", e113, *lino)
-			}
-			if data[0] != ']' { // TODO delete
-				fmt.Printf("  Start of Record of %d fields\n", fieldCount)
-			}
+		data, err = maybeStartRecord(data, &inRecord, &oldFieldIndex,
+			&fieldIndex, lino)
+		if err != nil {
+			return data, err
 		}
 		if fieldIndex != oldFieldIndex {
 			oldFieldIndex = fieldIndex
@@ -124,69 +126,26 @@ func readRecords(data []byte, metaTable *metaTableType, lino *int) ([]byte,
 		case ' ', '\t', '\r': // ignore whitespace separators
 			data = data[1:]
 		case '!':
-			fmt.Printf("    Got #%d: !\n", fieldIndex) // TODO delete
-			// TODO add sentinal value for the current field's type to
-			// current record
+			data, err = handleSentinal(data, metaField, lino)
 			fieldIndex += 1
-			data = data[1:]
 		case 'F', 'f', 'N', 'n':
-			fmt.Printf("    Got #%d: F\n", fieldIndex) // TODO delete
-			if metaField.kind != boolField {
-				err = fmt.Errorf("e%d#%d:got bool, expected %s", e114,
-					*lino, metaField.kind)
-			} else {
-				// TODO add false to current record
-				fieldIndex += 1
-				data = data[1:]
-			}
+			data, err = handleBool(data, false, metaField, lino)
+			fieldIndex += 1
 		case 'T', 't', 'Y', 'y':
-			fmt.Printf("    Got #%d: T\n", fieldIndex) // TODO delete
-			if metaField.kind != boolField {
-				err = fmt.Errorf("e%d#%d:got bool, expected %s", e115,
-					*lino, metaField.kind)
-			} else {
-				// TODO add true to current record
-				fieldIndex += 1
-				data = data[1:]
-			}
+			data, err = handleBool(data, true, metaField, lino)
+			fieldIndex += 1
 		case '(':
-			data, raw, err = readHexBytes(data[1:], lino)
-			if err == nil && metaField.kind != bytesField {
-				err = fmt.Errorf("e%d#%d:got bytes, expected %s", e116,
-					*lino, metaField.kind)
-			} else {
-				fmt.Printf("    Got #%d: %q\n", fieldIndex, raw) // TODO delete
-				// TODO add raw to current record
-				fieldIndex += 1
-			}
+			data, err = handleBytes(data, metaField, lino)
+			fieldIndex += 1
 		case '<':
-			data, s, err = readString(data[1:], lino)
-			if err == nil && metaField.kind != strField {
-				err = fmt.Errorf("e%d#%d:got str, expected %s", e117, *lino,
-					metaField.kind)
-			} else {
-				fmt.Printf("    Got #%d: %q\n", fieldIndex, s) // TODO delete
-				// TODO add string to current record
-				fieldIndex += 1
-			}
+			data, err = handleStr(data, metaField, lino)
+			fieldIndex += 1
 		case '-':
 			switch metaField.kind {
 			case intField:
-				var i int
-				data, i, err = readInt(data, lino)
-				if err == nil {
-					i = -i
-					// TODO add int to current record
-					fmt.Printf("    Got #%d: %d\n", fieldIndex, i) // TODO delete
-				}
+				data, err = handleInt(data, metaField, lino)
 			case realField:
-				var r float64
-				data, r, err = readReal(data, lino)
-				if err == nil {
-					r = -r
-					// TODO add real to current record
-					fmt.Printf("    Got #%d: %g\n", fieldIndex, r) // TODO delete
-				}
+				data, err = handleReal(data, metaField, lino)
 			default:
 				err = fmt.Errorf("e%d#%d:got -, expected %s", e118, *lino,
 					metaField.kind)
@@ -195,33 +154,15 @@ func readRecords(data []byte, metaTable *metaTableType, lino *int) ([]byte,
 		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 			switch metaField.kind {
 			case intField:
-				var i int
-				data, i, err = readInt(data, lino)
-				if err == nil {
-					fmt.Printf("    Got #%d: %d\n", fieldIndex, i) // TODO delete
-					// TODO add int to current record
-				}
+				data, err = handleInt(data, metaField, lino)
 			case realField:
-				var r float64
-				data, r, err = readReal(data, lino)
-				if err == nil {
-					fmt.Printf("    Got #%d: %g\n", fieldIndex, r) // TODO delete
-					// TODO add real to current record
-				}
+				data, err = handleReal(data, metaField, lino)
 			case dateField:
-				var d time.Time
-				data, d, err = readDateTime(data, DateFormat, lino)
-				if err == nil {
-					fmt.Printf("    Got #%d: %s\n", fieldIndex, d.Format(DateFormat)) // TODO delete
-					// TODO add date to current record
-				}
+				data, err = handleDateTime(data, DateFormat, metaField,
+					lino)
 			case dateTimeField:
-				var d time.Time
-				data, d, err = readDateTime(data, DateTimeFormat, lino)
-				if err == nil {
-					fmt.Printf("    Got #%d: %s\n", fieldIndex, d.Format(DateTimeFormat)) // TODO delete
-					// TODO add datetime to current record
-				}
+				data, err = handleDateTime(data, DateTimeFormat, metaField,
+					lino)
 			default:
 				err = fmt.Errorf("e%d#%d:got -, expected %s", e119, *lino,
 					metaField.kind)
@@ -240,7 +181,7 @@ func readRecords(data []byte, metaTable *metaTableType, lino *int) ([]byte,
 				rune(data[0]))
 		}
 		if err != nil {
-			return emptyBytes, err
+			return data, err
 		}
 		if fieldIndex == fieldCount {
 			inRecord = false
@@ -251,31 +192,134 @@ func readRecords(data []byte, metaTable *metaTableType, lino *int) ([]byte,
 	return data, nil
 }
 
-func readHexBytes(data []byte, lino *int) ([]byte, []byte, error) {
-	end := bytes.IndexByte(data, ')')
-	if end == -1 {
-		return data, nil, fmt.Errorf("e%d#%d:missing bytes terminator ')'",
-			e122, *lino)
+func maybeStartRecord(data []byte, inRecord *bool, oldFieldIndex,
+	fieldIndex, lino *int) ([]byte, error) {
+	if !*inRecord {
+		*inRecord = true
+		*oldFieldIndex = -1
+		*fieldIndex = 0
+		data = skipWs(data, lino)
+		if len(data) == 0 {
+			return data, fmt.Errorf("e%d#%d:unexpected end of data", e113,
+				*lino)
+		}
+		if data[0] != ']' { // TODO delete
+			fmt.Println("  Start of Record")
+		}
 	}
-	*lino += bytes.Count(data[:end], []byte{'\n'})
+	return data, nil
+}
+
+func handleSentinal(data []byte, metaField *metaFieldType,
+	lino *int) ([]byte, error) {
+	if metaField.kind == boolField {
+		return data, fmt.Errorf(
+			"e%d#%d:the sentinal is invalid for bool fields", e115, lino)
+	}
+	// TODO add sentinal value for the current field's type to
+	// current record
+	fmt.Println("    Got: !") // TODO delete
+	return data[1:], nil
+}
+
+func handleBool(data []byte, value bool, metaField *metaFieldType,
+	lino *int) ([]byte, error) {
+	if metaField.kind != boolField {
+		return data, fmt.Errorf("e%d#%d:got bool, expected %s", e114,
+			*lino, metaField.kind)
+	}
+	// TODO add value to current record
+	fmt.Printf("    Got: %t\n", value) // TODO delete
+	return data[1:], nil
+}
+
+func handleBytes(data []byte, metaField *metaFieldType, lino *int) ([]byte,
+	error) {
+	data = data[1:] // skip (
+	if metaField.kind != bytesField {
+		return data, fmt.Errorf("e%d#%d:got bytes, expected %s", e116,
+			*lino, metaField.kind)
+	}
+	data, raw, err := readHexBytes(data, lino)
+	if err != nil {
+		return data, err
+	}
+	fmt.Printf("    Got: %q\n", raw) // TODO delete
+	// TODO add raw to current record
+	return data, nil
+}
+
+func handleStr(data []byte, metaField *metaFieldType, lino *int) ([]byte,
+	error) {
+	data = data[1:] // skip <
+	if metaField.kind != strField {
+		return data, fmt.Errorf("e%d#%d:got str, expected %s", e117, *lino,
+			metaField.kind)
+	}
+
+	data, s, err := readString(data, lino)
+	if err != nil {
+		return data, err
+	}
+	fmt.Printf("    Got: %q\n", s) // TODO delete
+	// TODO add string to current record
+	return data, nil
+}
+
+func handleInt(data []byte, metaField *metaFieldType, lino *int) ([]byte,
+	error) {
+	data, i, err := readInt(data, lino)
+	if err != nil {
+		return data, err
+	}
+	// TODO add int to current record
+	fmt.Printf("    Got: %d\n", i) // TODO delete
+	return data, nil
+}
+
+func handleReal(data []byte, metaField *metaFieldType, lino *int) ([]byte,
+	error) {
+	data, r, err := readReal(data, lino)
+	if err != nil {
+		return data, err
+	}
+	// TODO add real to current record
+	fmt.Printf("    Got: %g\n", r) // TODO delete
+	return data, nil
+}
+
+func handleDateTime(data []byte, format string, metaField *metaFieldType,
+	lino *int) ([]byte, error) {
+	data, d, err := readDateTime(data, format, lino)
+	if err != nil {
+		return data, err
+	}
+	fmt.Printf("    Got: %s\n", d.Format(format)) // TODO delete
+	// TODO add date to current record
+	return data, err
+}
+
+func readHexBytes(data []byte, lino *int) ([]byte, []byte, error) {
+	end, err := scanToByte(data, ')', lino)
+	if err != nil {
+		return data, nil, err
+	}
 	chunks := bytes.Fields(data[:end])
 	chunk := bytes.Join(chunks, emptyBytes)
 	raw := make([]byte, hex.DecodedLen(len(chunk)))
-	_, err := hex.Decode(raw, chunk)
+	_, err = hex.Decode(raw, chunk)
 	if err != nil {
-		return emptyBytes, nil, fmt.Errorf("e%d#%d:invalid bytes %q", e123,
+		return data, nil, fmt.Errorf("e%d#%d:invalid bytes %q", e123,
 			*lino, chunk)
 	}
 	return data[end+1:], raw, nil // +1 skips final )
 }
 
 func readString(data []byte, lino *int) ([]byte, string, error) {
-	end := bytes.IndexByte(data, '>')
-	if end == -1 {
-		return data, "", fmt.Errorf("e%d#%d:missing string terminator '>'",
-			e124, *lino)
+	end, err := scanToByte(data, '>', lino)
+	if err != nil {
+		return data, "", err
 	}
-	*lino += bytes.Count(data[:end], []byte{'\n'})
 	s := Unescape(string(data[:end]))
 	return data[end+1:], s, nil // +1 skips final >
 }
@@ -328,8 +372,8 @@ func scan(data, valid []byte, lino *int) ([]byte, []byte, error) {
 		}
 		end++
 	}
-	return emptyBytes, emptyBytes, fmt.Errorf(
-		"e%d#%d:unexpected end of data", e128, *lino)
+	return data, emptyBytes, fmt.Errorf("e%d#%d:unexpected end of data",
+		e124, *lino)
 }
 
 func skipWs(data []byte, lino *int) []byte {
@@ -345,4 +389,13 @@ func skipWs(data []byte, lino *int) []byte {
 		end++
 	}
 	return data
+}
+
+func scanToByte(data []byte, b byte, lino *int) (int, error) {
+	end := bytes.IndexByte(data, b)
+	if end == -1 {
+		return 0, fmt.Errorf("e%d#%d:missing %q", e110, *lino, b)
+	}
+	*lino += bytes.Count(data[:end], []byte{'\n'})
+	return end, nil
 }

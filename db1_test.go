@@ -109,10 +109,10 @@ func makeDb(t *testing.T) Database {
 				29.99, 2, "Bales of <hay>"},
 			{1840, 152,
 				time.Date(2022, time.January, 16, 0, 0, 0, 0, time.UTC),
-				5.98, 3, "Straps & Things"},
+				5.98, -3, "Straps & Things"},
 			{1620, 153,
 				time.Date(2022, time.January, 19, 0, 0, 0, 0, time.UTC),
-				11.5, 1, "Washers (1\")"},
+				-11.5, 1, "Washers (1\")"},
 		}}
 	return db
 }
