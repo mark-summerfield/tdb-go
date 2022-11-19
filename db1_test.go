@@ -4,7 +4,7 @@ import (
 	_ "embed"
 	"encoding/hex"
 	"fmt"
-	"github.com/mark-summerfield/tdb"
+	tdb "github.com/mark-summerfield/tdb-go"
 	"os"
 	"testing"
 	"time"

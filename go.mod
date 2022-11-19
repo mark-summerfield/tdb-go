@@ -1,4 +1,4 @@
-module github.com/mark-summerfield/tdb
+module github.com/mark-summerfield/tdb-go
 
 go 1.19
 
