@@ -195,6 +195,7 @@ func readRecords(data []byte, metaTable *metaTableType, lino *int) ([]byte,
 			inRecord = false
 			// TODO add record based on values
 			fmt.Println("  End of Record", values) // TODO delete
+			values = nil // clear
 		}
 	}
 	return data, nil
