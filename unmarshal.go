@@ -16,6 +16,9 @@ import (
 // bytes) into a (pointer to a) database struct.
 func Unmarshal(data []byte, db any) error {
 	dbVal, err := getDbValue(data, db)
+	if err != nil {
+		return err
+	}
 	tableNames := getTableNames(dbVal)
 	metaData := make(metaDataType)
 	var metaTable *metaTableType
