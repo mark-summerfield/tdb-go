@@ -7,26 +7,43 @@ import (
 	"strings"
 )
 
-type metaDataType map[string]*metaTableType // key is tableName
+type metaDataType map[string]*metaTableType // key is tableName or tagName
+
+func (me metaDataType) addTable(tableName, tagName string) *metaTableType {
+	table := metaTableType{tableName, tagName, make([]*metaFieldType, 0, 1),
+		make(map[string]*metaFieldType)}
+	me[tableName] = &table
+	if tagName != "" {
+		me[tagName] = &table
+	}
+	return &table
+}
+
+func (me metaDataType) tableByName(name string) *metaTableType {
+	return me[name]
+}
 
 type metaTableType struct {
-	name         string // tableName
+	tableName    string
+	tagName      string
 	fields       []*metaFieldType
 	fieldForName map[string]*metaFieldType
 }
 
-func newMetaTable(name string) *metaTableType {
-	return &metaTableType{name, make([]*metaFieldType, 0, 1),
-		make(map[string]*metaFieldType)}
+func (me metaTableType) name() string {
+	if me.tagName != "" {
+		return me.tagName
+	}
+	return me.tableName
 }
 
 func (me metaTableType) String() string {
 	var s strings.Builder
 	s.WriteByte('[')
-	s.WriteString(me.name)
+	s.WriteString(me.name())
 	for _, field := range me.fields {
 		s.WriteByte(' ')
-		s.WriteString(field.name)
+		s.WriteString(field.name())
 		s.WriteByte(' ')
 		s.WriteString(field.kind.String())
 	}
@@ -38,27 +55,38 @@ func (me metaTableType) Len() int {
 	return len(me.fields)
 }
 
-func (me *metaTableType) Add(name, typename string) bool {
-	kind, ok := newFieldKind(typename)
+func (me *metaTableType) addField(fieldName, tagName, typeName string) bool {
+	kind, ok := newFieldKind(typeName)
 	if ok {
-		metaField := metaFieldType{name, kind}
+		metaField := metaFieldType{fieldName, tagName, kind}
 		me.fields = append(me.fields, &metaField)
-		me.fieldForName[name] = &metaField
+		me.fieldForName[fieldName] = &metaField
+		if tagName != "" {
+			me.fieldForName[tagName] = &metaField
+		}
 	}
 	return ok
 }
 
-func (me *metaTableType) Field(index int) *metaFieldType {
+func (me *metaTableType) field(index int) *metaFieldType {
 	return me.fields[index]
 }
 
-func (me *metaTableType) FieldByName(fieldName string) *metaFieldType {
-	return me.fieldForName[fieldName]
+func (me *metaTableType) fieldByName(name string) *metaFieldType {
+	return me.fieldForName[name]
 }
 
 type metaFieldType struct {
-	name string // fieldName
-	kind fieldKind
+	fieldName string
+	tagName   string
+	kind      fieldKind
+}
+
+func (me *metaFieldType) name() string {
+	if me.tagName != "" {
+		return me.tagName
+	}
+	return me.fieldName
 }
 
 type fieldKind uint8

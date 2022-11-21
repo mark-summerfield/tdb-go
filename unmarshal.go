@@ -19,19 +19,18 @@ func Unmarshal(data []byte, db any) error {
 	dbPtr, dbVal, err := getDbValues(data, db)
 	fmt.Println(dbPtr, dbVal) // TODO delete
 	metaData := make(metaDataType)
-	var tableName string
+	var metaTable *metaTableType
 	lino := 1
 	for len(data) > 0 {
 		b := data[0]
 		data = data[1:]
 		if b == '[' {
-			data, tableName, err = readTableMetaData(data, metaData, &lino)
-		} else if tableName != "" {
-			fmt.Println("Start of Table", tableName) // TODO delete
-			if data, err = readRecords(data, metaData[tableName],
-				&lino); err == nil {
-				fmt.Println("End of Table", tableName) // TODO delete
-				tableName = ""
+			data, metaTable, err = readTableMetaData(data, metaData, &lino)
+		} else if metaTable != nil {
+			fmt.Println("Start of Table", metaTable.name()) // TODO delete
+			if data, err = readRecords(data, metaTable, &lino); err == nil {
+				fmt.Println("End of Table", metaTable.name()) // TODO delete
+				metaTable = nil
 			}
 		}
 		if err != nil {
@@ -62,29 +61,29 @@ func getDbValues(data []byte, db any) (reflect.Value, reflect.Value,
 }
 
 func readTableMetaData(data []byte, metaData metaDataType,
-	lino *int) ([]byte, string, error) {
+	lino *int) ([]byte, *metaTableType, error) {
 	end, err := scanToByte(data, '%', lino)
 	if err != nil {
-		return data, "", err
+		return data, nil, err
 	}
 	parts := bytes.Fields(data[:end])
-	var tableName string
+	var metaTable *metaTableType
 	var fieldName string
 	for i, part := range parts {
 		if i == 0 {
-			tableName = string(part)
-			metaData[tableName] = newMetaTable(tableName)
+			tableName := string(part)
+			metaTable = metaData.addTable(tableName, "")
 		} else if i%2 != 0 {
 			fieldName = string(part)
 		} else {
-			if err := addField(fieldName, string(part), metaData[tableName],
+			if err := addField(fieldName, string(part), metaTable,
 				lino); err != nil {
-				return data, "", err
+				return data, nil, err
 			}
 
 		}
 	}
-	return data[end+1:], tableName, nil // +1 skips final %
+	return data[end+1:], metaTable, nil // +1 skips final %
 }
 
 func addField(fieldName, typeName string, metaTable *metaTableType,
@@ -92,7 +91,7 @@ func addField(fieldName, typeName string, metaTable *metaTableType,
 	if fieldName == "" {
 		return fmt.Errorf("e%d#%d:missing fieldname or type", e111, *lino)
 	}
-	if ok := metaTable.Add(fieldName, typeName); !ok {
+	if ok := metaTable.addField(fieldName, "", typeName); !ok {
 		return fmt.Errorf("e%d#%d:invalid typename %s", e112, *lino,
 			typeName)
 	}
@@ -118,11 +117,11 @@ func readRecords(data []byte, metaTable *metaTableType, lino *int) ([]byte,
 			if err != nil {
 				return data, err
 			}
-			values = make([]reflect.Value, 0)
+			values = make([]reflect.Value, fieldCount)
 		}
 		if fieldIndex != oldFieldIndex {
 			oldFieldIndex = fieldIndex
-			metaField = metaTable.Field(fieldIndex)
+			metaField = metaTable.field(fieldIndex)
 		}
 		switch data[0] {
 		case '\n': // ignore whitespace separators
@@ -132,19 +131,14 @@ func readRecords(data []byte, metaTable *metaTableType, lino *int) ([]byte,
 			data = data[1:]
 		case '!':
 			data, value, err = handleSentinal(data, metaField, lino)
-			fieldIndex += 1
 		case 'F', 'f', 'N', 'n':
 			data, value, err = handleBool(data, false, metaField, lino)
-			fieldIndex += 1
 		case 'T', 't', 'Y', 'y':
 			data, value, err = handleBool(data, true, metaField, lino)
-			fieldIndex += 1
 		case '(':
 			data, value, err = handleBytes(data, metaField, lino)
-			fieldIndex += 1
 		case '<':
 			data, value, err = handleStr(data, metaField, lino)
-			fieldIndex += 1
 		case '-':
 			switch metaField.kind {
 			case intField:
@@ -155,7 +149,6 @@ func readRecords(data []byte, metaTable *metaTableType, lino *int) ([]byte,
 				err = fmt.Errorf("e%d#%d:got -, expected %s", e118, *lino,
 					metaField.kind)
 			}
-			fieldIndex += 1
 		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 			switch metaField.kind {
 			case intField:
@@ -172,7 +165,6 @@ func readRecords(data []byte, metaTable *metaTableType, lino *int) ([]byte,
 				err = fmt.Errorf("e%d#%d:got -, expected %s", e119, *lino,
 					metaField.kind)
 			}
-			fieldIndex += 1
 		case ']': // end of table
 			if fieldIndex > 0 && fieldIndex < fieldCount {
 				err = fmt.Errorf(
@@ -189,13 +181,15 @@ func readRecords(data []byte, metaTable *metaTableType, lino *int) ([]byte,
 			return data, err
 		}
 		if value != nil {
-			values = append(values, *value)
+			values[fieldIndex] = *value
+			value = nil
+			fieldIndex++
 		}
 		if fieldIndex == fieldCount {
-			inRecord = false
 			// TODO add record based on values
 			fmt.Println("  End of Record", values) // TODO delete
-			values = nil                           // clear
+			inRecord = false
+			values = nil // clear
 		}
 	}
 	return data, nil
