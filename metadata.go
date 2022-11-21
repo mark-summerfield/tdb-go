@@ -76,6 +76,10 @@ func (me *metaTableType) fieldByName(name string) *metaFieldType {
 	return me.fieldForName[name]
 }
 
+func (me *metaTableType) match(name string) bool {
+	return name == me.tableName || name == me.tagName
+}
+
 type metaFieldType struct {
 	fieldName string
 	tagName   string
@@ -87,6 +91,10 @@ func (me *metaFieldType) name() string {
 		return me.tagName
 	}
 	return me.fieldName
+}
+
+func (me *metaFieldType) match(name string) bool {
+	return name == me.fieldName || name == me.tagName
 }
 
 type fieldKind uint8
