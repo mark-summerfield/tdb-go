@@ -65,15 +65,3 @@ func init() {
 	reservedWords = gset.New("bool", "bytes", "date", "datetime", "int",
 		"real", "str")
 }
-
-type dataNamesType struct {
-	tableNames   map[string]string
-	fieldIndexes map[string]map[string]int
-}
-
-/* TODO delete
-type dataNamesType struct {
-	tableNames map[string]string
-	fieldNames map[string]map[string]string
-}
-*/
