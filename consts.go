@@ -67,6 +67,13 @@ func init() {
 }
 
 type dataNamesType struct {
+	tableNames   map[string]string
+	fieldIndexes map[string]map[string]int
+}
+
+/* TODO delete
+type dataNamesType struct {
 	tableNames map[string]string
 	fieldNames map[string]map[string]string
 }
+*/

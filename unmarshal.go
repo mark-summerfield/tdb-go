@@ -67,8 +67,8 @@ func getDbValue(data []byte, db any) (reflect.Value, error) {
 func getDataNames(dbVal reflect.Value) dataNamesType {
 	// key=tableName | tagName value=tableName
 	tableNames := make(map[string]string)
-	// key=tableName value=map key=fieldName | tagName value=fieldName
-	fieldNames := make(map[string]map[string]string)
+	// key=tableName value=map key=fieldName | tagName value=fieldIndex
+	fieldIndexes := make(map[string]map[string]int)
 	dbType := dbVal.Type()
 	for i := 0; i < dbVal.NumField(); i++ {
 		tableName := dbVal.Type().Field(i).Name
@@ -77,24 +77,58 @@ func getDataNames(dbVal reflect.Value) dataNamesType {
 		if tableTagName != "" {
 			tableNames[tableTagName] = tableName
 		}
-		fieldNames[tableName] = make(map[string]string)
+		fieldIndexes[tableName] = make(map[string]int)
 		dbFieldType := dbVal.Field(i).Type().Elem()
 		for j := 0; j < dbFieldType.NumField(); j++ {
 			fieldName := dbFieldType.Field(j).Name
-			fieldNames[tableName][fieldName] = fieldName
+			fieldIndexes[tableName][fieldName] = j
 			fieldTagName := dbFieldType.Field(j).Tag.Get("tdb")
 			if fieldTagName != "" {
 				for _, name := range strings.Split(fieldTagName, ":") {
 					if !reservedWords.Contains(name) {
-						fieldNames[tableName][name] = fieldName
+						fieldIndexes[tableName][name] = j
 					}
 				}
 			}
 		}
 	}
-	return dataNamesType{tableNames, fieldNames}
+	return dataNamesType{tableNames, fieldIndexes}
 }
 
+/*
+TODO delete
+
+	func getDataNames(dbVal reflect.Value) dataNamesType {
+		// key=tableName | tagName value=tableName
+		tableNames := make(map[string]string)
+		// key=tableName value=map key=fieldName | tagName value=fieldName
+		fieldNames := make(map[string]map[string]string)
+		dbType := dbVal.Type()
+		for i := 0; i < dbVal.NumField(); i++ {
+			tableName := dbVal.Type().Field(i).Name
+			tableNames[tableName] = tableName
+			tableTagName := dbType.Field(i).Tag.Get("tdb")
+			if tableTagName != "" {
+				tableNames[tableTagName] = tableName
+			}
+			fieldNames[tableName] = make(map[string]string)
+			dbFieldType := dbVal.Field(i).Type().Elem()
+			for j := 0; j < dbFieldType.NumField(); j++ {
+				fieldName := dbFieldType.Field(j).Name
+				fieldNames[tableName][fieldName] = fieldName
+				fieldTagName := dbFieldType.Field(j).Tag.Get("tdb")
+				if fieldTagName != "" {
+					for _, name := range strings.Split(fieldTagName, ":") {
+						if !reservedWords.Contains(name) {
+							fieldNames[tableName][name] = fieldName
+						}
+					}
+				}
+			}
+		}
+		return dataNamesType{tableNames, fieldNames}
+	}
+*/
 func readTableMetaData(data []byte, metaData metaDataType,
 	dbVal reflect.Value, lino *int) ([]byte, *metaTableType, error) {
 	end, err := scanToByte(data, '%', lino)
@@ -141,8 +175,9 @@ func readRecords(data []byte, metaTable *metaTableType,
 	lino *int) ([]byte, error) {
 	var err error
 	var metaField *metaFieldType
-	var values []reflect.Value // TODO -or- map[string]reflect.Value (key==fieldName)?
 	var value *reflect.Value
+	var rec reflect.Value
+	var recVal reflect.Value
 	fieldCount := metaTable.Len()
 	inRecord := false
 	oldFieldIndex := -1
@@ -154,7 +189,8 @@ func readRecords(data []byte, metaTable *metaTableType,
 			if err != nil {
 				return data, err
 			}
-			values = make([]reflect.Value, fieldCount)
+			rec = makeRecord(metaTable.tableName, dbVal, dataNames)
+			recVal = reflect.ValueOf(rec)
 		}
 		if fieldIndex != oldFieldIndex {
 			oldFieldIndex = fieldIndex
@@ -218,20 +254,27 @@ func readRecords(data []byte, metaTable *metaTableType,
 			return data, err
 		}
 		if value != nil {
-			values[fieldIndex] = *value
+			// TODO set recVal.Field(fieldIndex) to *value ###########
+			//field := recVal.Field(fieldIndex)
+			// field.Set(*value)
 			value = nil
 			fieldIndex++
 		}
 		if fieldIndex == fieldCount {
-			fmt.Printf("dbVal %T %v %v %v\n", dbVal, dbVal, dbVal.Kind(), dbVal.Type())
-
-			// TODO add record based on values
-			fmt.Println("  End of Record", values) // TODO delete
+			// TODO append newRecord to appropriate slice of structs
+			fmt.Println("  End of Record", rec, recVal) // TODO delete
 			inRecord = false
-			values = nil // clear
 		}
 	}
 	return data, nil
+}
+
+func makeRecord(tableName string, dbVal reflect.Value,
+	dataNames *dataNamesType) reflect.Value {
+	field := dbVal.FieldByNameFunc(func(name string) bool {
+		return name == tableName || name == dataNames.tableNames[tableName]
+	})
+	return reflect.New(field.Type().Elem())
 }
 
 func maybeStartRecord(data []byte, inRecord *bool, oldFieldIndex,
