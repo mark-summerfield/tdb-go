@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -18,7 +17,7 @@ import (
 func Unmarshal(data []byte, db any) error {
 	var err error
 	dbVal, err := getDbValue(data, db)
-	dataNames := getDataNames(dbVal)
+	tableNames := getTableNames(dbVal)
 	metaData := make(metaDataType)
 	var metaTable *metaTableType
 	lino := 1
@@ -33,8 +32,8 @@ func Unmarshal(data []byte, db any) error {
 			}
 		} else if metaTable != nil {
 			fmt.Println("Start of Table", metaTable.name()) // TODO delete
-			if data, err = readRecords(data, metaTable, dbVal,
-				&dataNames, &lino); err == nil {
+			if data, err = readRecords(data, metaTable, dbVal, tableNames,
+				&lino); err == nil {
 				fmt.Println("End of Table", metaTable.name()) // TODO delete
 				metaTable = nil
 			} else {
@@ -64,11 +63,9 @@ func getDbValue(data []byte, db any) (reflect.Value, error) {
 	return dbVal, nil
 }
 
-func getDataNames(dbVal reflect.Value) dataNamesType {
+func getTableNames(dbVal reflect.Value) map[string]string {
 	// key=tableName | tagName value=tableName
 	tableNames := make(map[string]string)
-	// key=tableName value=map key=fieldName | tagName value=fieldIndex
-	fieldIndexes := make(map[string]map[string]int)
 	dbType := dbVal.Type()
 	for i := 0; i < dbVal.NumField(); i++ {
 		tableName := dbVal.Type().Field(i).Name
@@ -77,58 +74,10 @@ func getDataNames(dbVal reflect.Value) dataNamesType {
 		if tableTagName != "" {
 			tableNames[tableTagName] = tableName
 		}
-		fieldIndexes[tableName] = make(map[string]int)
-		dbFieldType := dbVal.Field(i).Type().Elem()
-		for j := 0; j < dbFieldType.NumField(); j++ {
-			fieldName := dbFieldType.Field(j).Name
-			fieldIndexes[tableName][fieldName] = j
-			fieldTagName := dbFieldType.Field(j).Tag.Get("tdb")
-			if fieldTagName != "" {
-				for _, name := range strings.Split(fieldTagName, ":") {
-					if !reservedWords.Contains(name) {
-						fieldIndexes[tableName][name] = j
-					}
-				}
-			}
-		}
 	}
-	return dataNamesType{tableNames, fieldIndexes}
+	return tableNames
 }
 
-/*
-TODO delete
-
-	func getDataNames(dbVal reflect.Value) dataNamesType {
-		// key=tableName | tagName value=tableName
-		tableNames := make(map[string]string)
-		// key=tableName value=map key=fieldName | tagName value=fieldName
-		fieldNames := make(map[string]map[string]string)
-		dbType := dbVal.Type()
-		for i := 0; i < dbVal.NumField(); i++ {
-			tableName := dbVal.Type().Field(i).Name
-			tableNames[tableName] = tableName
-			tableTagName := dbType.Field(i).Tag.Get("tdb")
-			if tableTagName != "" {
-				tableNames[tableTagName] = tableName
-			}
-			fieldNames[tableName] = make(map[string]string)
-			dbFieldType := dbVal.Field(i).Type().Elem()
-			for j := 0; j < dbFieldType.NumField(); j++ {
-				fieldName := dbFieldType.Field(j).Name
-				fieldNames[tableName][fieldName] = fieldName
-				fieldTagName := dbFieldType.Field(j).Tag.Get("tdb")
-				if fieldTagName != "" {
-					for _, name := range strings.Split(fieldTagName, ":") {
-						if !reservedWords.Contains(name) {
-							fieldNames[tableName][name] = fieldName
-						}
-					}
-				}
-			}
-		}
-		return dataNamesType{tableNames, fieldNames}
-	}
-*/
 func readTableMetaData(data []byte, metaData metaDataType,
 	dbVal reflect.Value, lino *int) ([]byte, *metaTableType, error) {
 	end, err := scanToByte(data, '%', lino)
@@ -170,9 +119,8 @@ func addField(fieldName, typeName string, metaTable *metaTableType,
 
 // TODO take in a reflect.Value for the outer target struct's corresponding
 // slice
-func readRecords(data []byte, metaTable *metaTableType,
-	dbVal reflect.Value, dataNames *dataNamesType,
-	lino *int) ([]byte, error) {
+func readRecords(data []byte, metaTable *metaTableType, dbVal reflect.Value,
+	tableNames map[string]string, lino *int) ([]byte, error) {
 	var err error
 	var metaField *metaFieldType
 	var value *reflect.Value
@@ -189,7 +137,7 @@ func readRecords(data []byte, metaTable *metaTableType,
 			if err != nil {
 				return data, err
 			}
-			rec = makeRecord(metaTable.tableName, dbVal, dataNames)
+			rec = makeRecord(metaTable.tableName, dbVal, tableNames)
 			recVal = reflect.ValueOf(rec)
 		}
 		if fieldIndex != oldFieldIndex {
@@ -270,9 +218,9 @@ func readRecords(data []byte, metaTable *metaTableType,
 }
 
 func makeRecord(tableName string, dbVal reflect.Value,
-	dataNames *dataNamesType) reflect.Value {
+	tableNames map[string]string) reflect.Value {
 	field := dbVal.FieldByNameFunc(func(name string) bool {
-		return name == tableName || name == dataNames.tableNames[tableName]
+		return name == tableName || name == tableNames[tableName]
 	})
 	return reflect.New(field.Type().Elem())
 }
