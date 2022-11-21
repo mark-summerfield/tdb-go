@@ -268,11 +268,11 @@ func marshalDateTimeField(out *bytes.Buffer, field reflect.Value, tableName,
 	return nil
 }
 
-func parseTag(fieldName, tag string) (string, string) {
+func parseTag(name, tag string) (string, string) {
 	i := strings.IndexByte(tag, ':')
 	if i == -1 {
 		if reservedWords.Contains(tag) { // `tdb:"type"`
-			return fieldName, tag
+			return name, tag
 		}
 		return tag, "" // `tdb:"FieldName"`
 	} else {
@@ -284,6 +284,6 @@ func parseTag(fieldName, tag string) (string, string) {
 		if reservedWords.Contains(right) { // `tdb:FieldName:type"`
 			return left, right
 		}
-		return fieldName, "" // `tdb:FieldNameA:FieldNameB"`
+		return name, "" // `tdb:FieldNameA:FieldNameB"`
 	}
 }
