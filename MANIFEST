@@ -1,6 +1,7 @@
 # TODO test every unmarshal error
 # TODO more unmarshal tests
 # TODO document
+# TODO regression.py (for language-agnostic testing; see uxf for eg)
 tdb.go
 marshal.go
 unmarshal.go
@@ -10,6 +11,8 @@ consts.go
 
 tdb_test.go # TODO Unmarshal tests
 db1_test.go
+csv_test.go
+# TODO ###################### classic_test.go
 
 bin/tdb.go # TODO tdb compare format lint
 convert/tdbconvert.go # TODO tdb ↔ sqlite csv uxf json etc.

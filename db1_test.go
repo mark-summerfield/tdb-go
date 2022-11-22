@@ -11,7 +11,7 @@ import (
 )
 
 //go:embed eg/db1.tdb
-var DbEg1Text string
+var DB1 string
 
 func TestDb1(t *testing.T) {
 	db := makeDb(t)
@@ -19,16 +19,16 @@ func TestDb1(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if string(raw) != DbEg1Text {
+	if string(raw) != DB1 {
 		fmt.Println("======= Tdb Marshal Database ======")
 		fmt.Print(string(raw))
 		_ = os.WriteFile("/tmp/1", raw, 0666)
-		_ = os.WriteFile("/tmp/2", []byte(DbEg1Text), 0666)
+		_ = os.WriteFile("/tmp/2", []byte(DB1), 0666)
 		fmt.Println("wrote /tmp/[12] (actual/expected)")
 		fmt.Println("===================================")
 		t.Error("Database: raw != text")
 	}
-	var database Database
+	var database db1Database
 	err = tdb.Unmarshal(raw, &database)
 	if err != nil {
 		t.Error(err)
@@ -37,18 +37,18 @@ func TestDb1(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if string(raw2) != DbEg1Text {
+	if string(raw2) != DB1 {
 		fmt.Println("====== Tdb Unmarshal Database =====")
 		fmt.Print(string(raw2))
 		_ = os.WriteFile("/tmp/3", raw2, 0666)
-		_ = os.WriteFile("/tmp/4", []byte(DbEg1Text), 0666)
+		_ = os.WriteFile("/tmp/4", []byte(DB1), 0666)
 		fmt.Println("wrote /tmp/[34] (actual/expected)")
 		fmt.Println("===================================")
 		t.Error("Database: raw2 != text")
 	}
 }
 
-type Database struct {
+type db1Database struct {
 	Customers []Customer
 	Invoices  []Invoice
 	LineItems []LineItem `tdb:"Items"`
@@ -81,12 +81,12 @@ type LineItem struct {
 	Desc      string `tdb:"Description"`
 }
 
-func makeDb(t *testing.T) Database {
+func makeDb(t *testing.T) db1Database {
 	icon, err := hex.DecodeString("89504E470D0A1A0A0000000D494844520000000C0000000C080600000056755CE7000000097048597300000EC400000EC401952B0E1B0000002849444154289163646068F8CF4002602245317D34B0600A3530621183FB7310FA81640D8C832FE2002C7F051786CBFA670000000049454E44AE426082")
 	if err != nil {
 		t.Error(err)
 	}
-	db := Database{
+	db := db1Database{
 		Customers: []Customer{
 			{50, "Best People", "123 Somewhere", "John Doe", "j@doe.com",
 				icon},
