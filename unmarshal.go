@@ -123,11 +123,11 @@ func addField(fieldName, typeName string, metaTable *metaTableType,
 func readRecords(data []byte, metaTable *metaTableType, dbVal reflect.Value,
 	tableNames map[string]string, lino *int) ([]byte, error) {
 	var err error
-	var metaField *metaFieldType
 	var table reflect.Value
 	var rec reflect.Value
 	var recVal reflect.Value
 	var field reflect.Value
+	var metaField *metaFieldType
 	inRecord := false
 	columns := metaTable.Len()
 	oldColumn := -1
@@ -142,12 +142,11 @@ func readRecords(data []byte, metaTable *metaTableType, dbVal reflect.Value,
 			table, rec = makeRecordType(metaTable.tableName, dbVal,
 				tableNames)
 			recVal = reflect.New(rec.Type().Elem()).Elem()
-			field = recVal.Field(0)
 		}
 		if column != oldColumn {
 			oldColumn = column
-			metaField = metaTable.field(column)
 			field = recVal.Field(column)
+			metaField = metaTable.field(column)
 		}
 		switch data[0] {
 		case '\n': // ignore whitespace separators
