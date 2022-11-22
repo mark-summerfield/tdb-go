@@ -93,7 +93,7 @@ func readTableMetaData(data []byte, metaData metaDataType,
 	for i, part := range parts {
 		if i == 0 {
 			tableName = string(part)
-			metaTable = metaData.addTable(tableName, "")
+			metaTable = metaData.addTable(tableName)
 		} else if i%2 != 0 {
 			fieldName = string(part)
 		} else {
@@ -113,7 +113,7 @@ func addField(fieldName, typeName string, metaTable *metaTableType,
 	if fieldName == "" {
 		return fmt.Errorf("e%d#%d:missing fieldname or type", e111, *lino)
 	}
-	if ok := metaTable.addField(fieldName, "", typeName); !ok {
+	if ok := metaTable.addField(fieldName, typeName); !ok {
 		return fmt.Errorf("e%d#%d:invalid typename %s", e112, *lino,
 			typeName)
 	}
@@ -139,7 +139,7 @@ func readRecords(data []byte, metaTable *metaTableType, dbVal reflect.Value,
 			if err != nil {
 				return data, err
 			}
-			table, rec, err = makeRecordType(metaTable.tableName, dbVal,
+			table, rec, err = makeRecordType(metaTable.name, dbVal,
 				tableNames)
 			if err != nil {
 				return data, err
