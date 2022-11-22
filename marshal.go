@@ -36,12 +36,12 @@ func Marshal(db any) ([]byte, error) {
 //
 // By default for real numbers the [Marshal] function outputs them using the
 // fewest number of decimal digits necessary. In particular this means that
-// numbers without a fractional part are output like ints (e.g., 2.0 → 2).
+// numbers whose fractional part is 0 are output like ints (e.g., 2.0 → 2).
 //
-// To control decimal output use this function, passing a decimals value of
-// -1 (or 0) means use the minimum number of places to preserve value, e.g,
-// 3.0 → 3 (this is the default). 1-19 means use exactly that number; any
-// other value means use -1.
+// To control decimal output use this function. Pass a decimals value of
+// 1-19 to use exactly that number of decimal digits; any other value means
+// use the minimum number of decimal digits necessary (which may be none for
+// numbers whose fractional part is 0).
 func MarshalDecimals(db any, decimals int) ([]byte, error) {
 	var out bytes.Buffer
 	dbVal := reflect.ValueOf(db)

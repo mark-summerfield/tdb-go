@@ -16,15 +16,15 @@ Import using:
 
 Types:
 
-	| Tdb Type |  Go Types       |
-	|----------|-----------------|
-	| bool     | bool            |
-	| bytes    | []byte          |
-	| date     | time.Time       |
-	| datetime | time.Time       |
-	| int      | int uint etc.   |
-	| real     | float64 float32 |
-	| str      | string          |
+	| Tdb Type |  Go Types                  |
+	|----------|----------------------------|
+	| bool     | bool                       |
+	| bytes    | []byte                     |
+	| date     | time.Time                  |
+	| datetime | time.Time                  |
+	| int      | int uint int32 uint32 etc. |
+	| real     | float64 float32            |
+	| str      | string                     |
 
 The tdb package provides constants for each type's sentinal value (except
 for “bool“s for which there is no sentinal value).
@@ -59,6 +59,10 @@ name is different from the corresponding struct name. And a tag is needed
 for time.Time fields if the field is a Tdb `date` field (since the default
 is `datetime`). For example, see `db1_test.go` and `csv_test.go` for structs
 which work fine despite having few tags.
+
+The order of tables in a .tdb file in relation to the outer struct doesn't
+matter. However, the order of fields within a table must match between the
+.tdb file's table definition and the corresponding struct.
 
 Naturally, you can use any structs you like that meet tdb's minimum
 requirements.

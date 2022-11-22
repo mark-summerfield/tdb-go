@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// These are really constants.
 var (
 	BytesSentinal    = []byte{ByteSentinal}
 	DateSentinal     = time.Date(1808, time.August, 8, 0, 0, 0, 0, time.UTC)
