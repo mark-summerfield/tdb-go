@@ -1,3 +1,5 @@
+# TODO test every unmarshal error
+# TODO more unmarshal tests
 # TODO document
 tdb.go
 marshal.go

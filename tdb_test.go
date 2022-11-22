@@ -3,6 +3,7 @@ package tdb
 import (
 	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 	"time"
 )
@@ -10,8 +11,12 @@ import (
 func compare(n int, raw []byte, expected string, t *testing.T) {
 	actual := string(raw)
 	if actual != expected {
-		t.Errorf("\nTest%03d:\nexpected: %q !=\nactual:   %q", n, expected,
-			actual)
+		actual = strings.TrimSpace(actual)
+		expected = strings.TrimSpace(expected)
+		if actual != expected {
+			t.Errorf("\nTest%03d:\nexpected: %q !=\nactual:   %q", n,
+				expected, actual)
+		}
 	}
 }
 
@@ -72,7 +77,11 @@ func Test002(t *testing.T) {
 	if err := Unmarshal([]byte(data), &db); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
-	fmt.Println("Test002", db)
+	raw, err := Marshal(db)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	compare(2, raw, data, t)
 }
 
 func TestE100(t *testing.T) {
