@@ -16,15 +16,15 @@ Import using:
 
 Types:
 
-	| Tdb Type |  Go Type  |
-	|----------|-----------|
-	| bool     | bool      |
-	| bytes    | []byte    |
-	| date     | time.Time |
-	| datetime | time.Time |
-	| int      | int       |
-	| real     | float64   |
-	| str      | string    |
+	| Tdb Type |  Go Types       |
+	|----------|-----------------|
+	| bool     | bool            |
+	| bytes    | []byte          |
+	| date     | time.Time       |
+	| datetime | time.Time       |
+	| int      | int uint etc.   |
+	| real     | float64 float32 |
+	| str      | string          |
 
 The tdb package provides constants for each type's sentinal value (except
 for “bool“s for which there is no sentinal value).

@@ -36,12 +36,12 @@ func Marshal(db any) ([]byte, error) {
 //
 // By default for real numbers the [Marshal] function outputs them using the
 // fewest number of decimal digits necessary. In particular this means that
-// numbers without a fractional part are output like ints (e.g., 5.0 → 5).
+// numbers without a fractional part are output like ints (e.g., 2.0 → 2).
 //
-// To control decimal output use this function, passing a decimals value: -1
-// (or 0) signifies use minimum number of places to preserve value, e.g, 5.0
-// → 5 (this is the default). 1-19 means use exactly that number; any other
-// value means use -1.
+// To control decimal output use this function, passing a decimals value of
+// -1 (or 0) means use the minimum number of places to preserve value, e.g,
+// 3.0 → 3 (this is the default). 1-19 means use exactly that number; any
+// other value means use -1.
 func MarshalDecimals(db any, decimals int) ([]byte, error) {
 	var out bytes.Buffer
 	dbVal := reflect.ValueOf(db)
@@ -152,8 +152,8 @@ func marshalTableMetaData(out *bytes.Buffer, field reflect.Value, typeName,
 			out.WriteString("bytes")
 		} else {
 			return isDate, fmt.Errorf(
-				"e%d#%s.%s:unrecognized field slice type %T",
-				e103, tableName, fieldName, field)
+				"e%d#%s.%s:unrecognized field slice type %T", e103,
+				tableName, fieldName, field)
 		}
 	default:
 		x := field.Interface()
@@ -166,8 +166,8 @@ func marshalTableMetaData(out *bytes.Buffer, field reflect.Value, typeName,
 			}
 		} else {
 			return isDate, fmt.Errorf(
-				"e%d#%s.%s:unrecognized field type %T", e104,
-				tableName, fieldName, x)
+				"e%d#%s.%s:unrecognized field type %T", e104, tableName,
+				fieldName, x)
 		}
 	}
 	return isDate, nil
@@ -306,8 +306,7 @@ func parseTag(name, tag string) (string, string) {
 }
 
 func sanitizedDecimals(decimals int) int {
-	switch decimals {
-	case 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19:
+	if 1 <= decimals && decimals <= 19 {
 		return decimals
 	}
 	return -1

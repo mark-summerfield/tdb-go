@@ -7,5 +7,3 @@ import _ "embed"
 
 //go:embed Version.dat
 var Version string // This tdb package's version.
-
-const TdbVersion = "1" // The highest Tdb format version this package handles.
