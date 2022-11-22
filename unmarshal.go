@@ -33,17 +33,14 @@ func Unmarshal(data []byte, db any) error {
 				return err
 			}
 		} else if metaTable != nil {
-			fmt.Println("Start of Table", metaTable.name()) // TODO delete
 			if data, err = readRecords(data, metaTable, dbVal, tableNames,
 				&lino); err == nil {
-				fmt.Println("End of Table", metaTable.name()) // TODO delete
 				metaTable = nil
 			} else {
 				return err
 			}
 		}
 	}
-	fmt.Println(dbVal) // TODO delete
 	return nil
 }
 
@@ -156,14 +153,19 @@ func readRecords(data []byte, metaTable *metaTableType, dbVal reflect.Value,
 			data = data[1:]
 		case '!':
 			data, err = handleSentinal(data, metaField, field, lino)
+			column++
 		case 'F', 'f', 'N', 'n':
 			data, err = handleBool(data, false, metaField, field, lino)
+			column++
 		case 'T', 't', 'Y', 'y':
 			data, err = handleBool(data, true, metaField, field, lino)
+			column++
 		case '(':
 			data, err = handleBytes(data, metaField, field, lino)
+			column++
 		case '<':
 			data, err = handleStr(data, metaField, field, lino)
+			column++
 		case '-':
 			switch metaField.kind {
 			case intField:
@@ -174,6 +176,7 @@ func readRecords(data []byte, metaTable *metaTableType, dbVal reflect.Value,
 				err = fmt.Errorf("e%d#%d:got -, expected %s", e118, *lino,
 					metaField.kind)
 			}
+			column++
 		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 			switch metaField.kind {
 			case intField:
@@ -190,6 +193,7 @@ func readRecords(data []byte, metaTable *metaTableType, dbVal reflect.Value,
 				err = fmt.Errorf("e%d#%d:got -, expected %s", e119, *lino,
 					metaField.kind)
 			}
+			column++
 		case ']': // end of table
 			if column > 0 && column < columns {
 				err = fmt.Errorf(
@@ -205,10 +209,10 @@ func readRecords(data []byte, metaTable *metaTableType, dbVal reflect.Value,
 		if err != nil {
 			return data, err
 		}
-		column++
 		if column == columns {
 			table.Set(reflect.Append(table, recVal))
-			fmt.Println("  End of Record", table) // TODO delete
+			oldColumn = -1
+			column = 0
 			inRecord = false
 		}
 	}
@@ -233,9 +237,6 @@ func startRecord(data []byte, inRecord *bool, oldColumn, column,
 		return data, fmt.Errorf("e%d#%d:unexpected end of data", e113,
 			*lino)
 	}
-	if data[0] != ']' { // TODO delete
-		fmt.Println("  Start of Record")
-	}
 	return data, nil
 }
 
@@ -258,7 +259,6 @@ func handleSentinal(data []byte, metaField *metaFieldType,
 	case strField:
 		field.SetString(StrSentinal)
 	}
-	fmt.Println("    Got sentinal: !") // TODO delete
 	return data[1:], nil
 }
 
@@ -268,7 +268,6 @@ func handleBool(data []byte, value bool, metaField *metaFieldType,
 		return data, fmt.Errorf("e%d#%d:got bool, expected %s", e114, *lino,
 			metaField.kind)
 	}
-	fmt.Printf("    Got bool: %t\n", value) // TODO delete
 	field.SetBool(value)
 	return data[1:], nil
 }
@@ -284,7 +283,6 @@ func handleBytes(data []byte, metaField *metaFieldType, field reflect.Value,
 	if err != nil {
 		return data, err
 	}
-	fmt.Printf("    Got bytes: %q\n", raw) // TODO delete
 	field.SetBytes(raw)
 	return data, nil
 }
@@ -296,12 +294,10 @@ func handleStr(data []byte, metaField *metaFieldType, field reflect.Value,
 		return data, fmt.Errorf("e%d#%d:got str, expected %s", e117, *lino,
 			metaField.kind)
 	}
-
 	data, s, err := readString(data, lino)
 	if err != nil {
 		return data, err
 	}
-	fmt.Printf("    Got str: %q\n", s) // TODO delete
 	field.SetString(s)
 	return data, nil
 }
@@ -312,7 +308,6 @@ func handleInt(data []byte, metaField *metaFieldType, field reflect.Value,
 	if err != nil {
 		return data, err
 	}
-	fmt.Printf("    Got int: %d\n", i) // TODO delete
 	field.SetInt(int64(i))
 	return data, nil
 }
@@ -323,7 +318,6 @@ func handleReal(data []byte, metaField *metaFieldType, field reflect.Value,
 	if err != nil {
 		return data, err
 	}
-	fmt.Printf("    Got real: %g\n", r) // TODO delete
 	field.SetFloat(r)
 	return data, nil
 }
@@ -334,7 +328,6 @@ func handleDateTime(data []byte, format string, metaField *metaFieldType,
 	if err != nil {
 		return data, err
 	}
-	fmt.Printf("    Got date/time: %s\n", d.Format(format)) // TODO delete
 	field.Set(reflect.ValueOf(d))
 	return data, err
 }
