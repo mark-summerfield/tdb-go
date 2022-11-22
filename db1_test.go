@@ -11,7 +11,7 @@ import (
 )
 
 //go:embed eg/db1.tdb
-var DB1 string
+var Db1 string
 
 func TestDb1(t *testing.T) {
 	db := makeDb(t)
@@ -19,11 +19,11 @@ func TestDb1(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if string(raw) != DB1 {
+	if string(raw) != Db1 {
 		fmt.Println("======= Tdb Marshal Database ======")
 		fmt.Print(string(raw))
 		_ = os.WriteFile("/tmp/1", raw, 0666)
-		_ = os.WriteFile("/tmp/2", []byte(DB1), 0666)
+		_ = os.WriteFile("/tmp/2", []byte(Db1), 0666)
 		fmt.Println("wrote /tmp/[12] (actual/expected)")
 		fmt.Println("===================================")
 		t.Error("Database: raw != text")
@@ -37,11 +37,11 @@ func TestDb1(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if string(raw2) != DB1 {
+	if string(raw2) != Db1 {
 		fmt.Println("====== Tdb Unmarshal Database =====")
 		fmt.Print(string(raw2))
 		_ = os.WriteFile("/tmp/3", raw2, 0666)
-		_ = os.WriteFile("/tmp/4", []byte(DB1), 0666)
+		_ = os.WriteFile("/tmp/4", []byte(Db1), 0666)
 		fmt.Println("wrote /tmp/[34] (actual/expected)")
 		fmt.Println("===================================")
 		t.Error("Database: raw2 != text")

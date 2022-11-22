@@ -10,19 +10,19 @@ import (
 )
 
 //go:embed eg/csv.tdb
-var CSV string
+var Csv string
 
-func TestCSV(t *testing.T) {
+func TestCsv(t *testing.T) {
 	db := makeCSV(t)
 	raw, err := tdb.Marshal(db)
 	if err != nil {
 		t.Error(err)
 	}
-	if string(raw) != CSV {
+	if string(raw) != Csv {
 		fmt.Println("======= Tdb Marshal Database ======")
 		fmt.Print(string(raw))
 		_ = os.WriteFile("/tmp/1", raw, 0666)
-		_ = os.WriteFile("/tmp/2", []byte(CSV), 0666)
+		_ = os.WriteFile("/tmp/2", []byte(Csv), 0666)
 		fmt.Println("wrote /tmp/[12] (actual/expected)")
 		fmt.Println("===================================")
 		t.Error("Database: raw != text")
@@ -36,11 +36,11 @@ func TestCSV(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if string(raw2) != CSV {
+	if string(raw2) != Csv {
 		fmt.Println("====== Tdb Unmarshal Database =====")
 		fmt.Print(string(raw2))
 		_ = os.WriteFile("/tmp/3", raw2, 0666)
-		_ = os.WriteFile("/tmp/4", []byte(CSV), 0666)
+		_ = os.WriteFile("/tmp/4", []byte(Csv), 0666)
 		fmt.Println("wrote /tmp/[34] (actual/expected)")
 		fmt.Println("===================================")
 		t.Error("Database: raw2 != text")

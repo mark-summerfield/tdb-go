@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+// Escape returns an XML-escaped string, i.e., where runes are replaced as
+// follows: & → &amp;, < → &lt;, > → &gt;.
 func Escape(s string) string {
 	result := make([]rune, 0, len(s)/2)
 	for _, c := range s {
@@ -26,12 +28,17 @@ func Escape(s string) string {
 	return string(result)
 }
 
+// Unescape accepts an XML-escaped string and returns a plain text string
+// with no escapes, i.e., where substrings are replaced with runes as
+// follows: &amp; → &, &lt; → <, &gt; → >.
 func Unescape(s string) string {
 	s = strings.ReplaceAll(s, "&lt;", "<")
 	s = strings.ReplaceAll(s, "&gt;", ">")
 	return strings.ReplaceAll(s, "&amp;", "&")
 }
 
+// IsSentinal returns true if the given value is a Tdb sentintal; otherwise
+// returns false.
 func IsSentinal(value any) bool {
 	switch value := value.(type) {
 	case bool:

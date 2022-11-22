@@ -136,8 +136,11 @@ func readRecords(data []byte, metaTable *metaTableType, dbVal reflect.Value,
 			if err != nil {
 				return data, err
 			}
-			table, rec = makeRecordType(metaTable.tableName, dbVal,
+			table, rec, err = makeRecordType(metaTable.tableName, dbVal,
 				tableNames)
+			if err != nil {
+				return data, err
+			}
 			recVal = reflect.New(rec.Type().Elem()).Elem()
 		}
 		if column != oldColumn {
@@ -220,11 +223,15 @@ func readRecords(data []byte, metaTable *metaTableType, dbVal reflect.Value,
 }
 
 func makeRecordType(tableName string, dbVal reflect.Value,
-	tableNames map[string]string) (reflect.Value, reflect.Value) {
+	tableNames map[string]string) (reflect.Value, reflect.Value, error) {
 	field := dbVal.FieldByNameFunc(func(name string) bool {
 		return name == tableName || name == tableNames[tableName]
 	})
-	return field, reflect.New(field.Type().Elem())
+	if field.Kind() == reflect.Invalid {
+		return field, field, fmt.Errorf("e%d#:invalid record type for %q",
+			e128, tableName)
+	}
+	return field, reflect.New(field.Type().Elem()), nil
 }
 
 func startRecord(data []byte, inRecord *bool, oldColumn, column,

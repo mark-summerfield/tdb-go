@@ -186,14 +186,16 @@ func marshalRecord(out *bytes.Buffer, record any, dateIndexes gset.Set[int],
 			if gong.IsRealClose(r, RealSentinal) {
 				out.WriteByte('!')
 			} else {
-				out.WriteString(strconv.FormatFloat(r, 'f', -1, 32))
+				out.WriteString(strconv.FormatFloat(r, 'f',
+					getDecimalPlaces(), 32))
 			}
 		case reflect.Float64:
 			r := field.Float()
 			if gong.IsRealClose(r, RealSentinal) {
 				out.WriteByte('!')
 			} else {
-				out.WriteString(strconv.FormatFloat(r, 'f', -1, 64))
+				out.WriteString(strconv.FormatFloat(r, 'f',
+					getDecimalPlaces(), 64))
 			}
 		case reflect.String:
 			s := field.String()
@@ -286,4 +288,14 @@ func parseTag(name, tag string) (string, string) {
 		}
 		return name, "" // `tdb:FieldNameA:FieldNameB"`
 	}
+}
+
+func getDecimalPlaces() int {
+	switch DecimalPlaces {
+	case -1, 0:
+		return -1
+	case 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19:
+		return DecimalPlaces
+	}
+	return 19
 }

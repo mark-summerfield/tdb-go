@@ -3,9 +3,7 @@
 
 package tdb
 
-import (
-	"strings"
-)
+import "strings"
 
 type metaDataType map[string]*metaTableType // key is tableName or tagName
 

@@ -59,6 +59,7 @@ const (
 	e125
 	e126
 	e127
+	e128
 )
 
 func init() {
