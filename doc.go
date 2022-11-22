@@ -2,8 +2,8 @@
 // License: Apache-2.0
 
 /*
-Tdb provides Marshal and Unmarshal functions for writing and reading []byte
-slices to or from .tdb format.
+Tdb provides [Marshal] and [Unmarshal] functions for writing and reading
+[]byte slices to or from .tdb format.
 
 To use these functions you must provide a populated (for Marshal) or
 unpopulated (for Unmarshal) struct. This outer struct represents a text
@@ -14,7 +14,22 @@ Import using:
 
 	import tdb "github.com/mark-summerfield/tdb-go"
 
-The Marshal and Unmarshal examples use these structs:
+Types:
+
+	| Tdb Type |  Go Type  |
+	|----------|-----------|
+	| bool     | bool      |
+	| bytes    | []byte    |
+	| date     | time.Time |
+	| datetime | time.Time |
+	| int      | int       |
+	| real     | float64   |
+	| str      | string    |
+
+The tdb package provides constants for each type's sentinal value (except
+for “bool“s for which there is no sentinal value).
+
+The [Marshal] and [Unmarshal] examples use these structs:
 
 	type classicDatabase struct {
 		Employees   []Employee   `tdb:"emp"`

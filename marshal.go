@@ -26,6 +26,8 @@ import (
 // the struct fieldnames, use tags, with the required name, e.g.,
 // `tdb:"MyFieldName"`, and for dates and datetimes with the type too, e.g.,
 // `tdb:"MyDateField:date"`, etc.
+//
+// See also [Unmarshal].
 func Marshal(db any) ([]byte, error) {
 	var out bytes.Buffer
 	dbVal := reflect.ValueOf(db)

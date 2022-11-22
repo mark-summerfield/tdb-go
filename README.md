@@ -143,26 +143,13 @@ store this data and add it to the Tdb.
 
 ## Libraries
 
-_This format does not currently have any implementations._
-
 |**Library**|**Language**|**Notes**                    |
 |-----------|------------|-----------------------------|
-||||
+|tdb-go|Go|https://pkg.go.dev/github.com/mark-summerfield/tdb-go|
 
-### Go
-
-|**Tdb Type**|**Go Type**|
-|------------|-----------|
-|`bool`      |`bool`|
-|`bytes`     |`[]byte`|
-|`date`      |`time.Time`|
-|`datetime`  |`time.Time`|
-|`int`       |`int`|
-|`real`      |`float64`|
-|`str`       |`string`|
-
-The Go library provides constants for each type's sentinal value (except for
-``bool``s for which there is no sentinal value).
+A Python implementation is planned. We will happily add links to
+implementations in other languages if they pass the tests. (Tdb is a
+relatively simple format to parse and write.) 
 
 ## BNF
 

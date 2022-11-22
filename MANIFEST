@@ -1,5 +1,6 @@
-# TODO test every unmarshal error
-# TODO document
+# TODO add a test (or ✗) for every e-code
+# TODO bin/tdb.go
+# TODO convert/tdbconvert.go
 # TODO regression.py (for language-agnostic testing; see uxf for eg)
 doc.go
 tdb.go

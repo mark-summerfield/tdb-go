@@ -11,6 +11,7 @@ import (
 
 // Escape returns an XML-escaped string, i.e., where runes are replaced as
 // follows: & → &amp;, < → &lt;, > → &gt;.
+// See also [Unescape].
 func Escape(s string) string {
 	result := make([]rune, 0, len(s)/2)
 	for _, c := range s {
@@ -31,6 +32,7 @@ func Escape(s string) string {
 // Unescape accepts an XML-escaped string and returns a plain text string
 // with no escapes, i.e., where substrings are replaced with runes as
 // follows: &amp; → &, &lt; → <, &gt; → >.
+// See also [Escape].
 func Unescape(s string) string {
 	s = strings.ReplaceAll(s, "&lt;", "<")
 	s = strings.ReplaceAll(s, "&gt;", ">")

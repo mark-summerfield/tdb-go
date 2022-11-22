@@ -15,6 +15,8 @@ import (
 
 // Unmarshal reads the data from the given string (as raw UTF-8-encoded
 // bytes) into a (pointer to a) database struct.
+//
+// See also [Marshal].
 func Unmarshal(data []byte, db any) error {
 	dbVal, err := getDbValue(data, db)
 	if err != nil {
