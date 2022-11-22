@@ -53,6 +53,13 @@ The [Marshal] and [Unmarshal] examples use these structs:
 		Location string `tdb:"loc"`
 	}
 
+Although struct tags are used extensively here, they are only actually
+required for two purposes. A tag is needed if a .tdb file's table or field
+name is different from the corresponding struct name. And a tag is needed
+for time.Time fields if the field is a Tdb `date` field (since the default
+is `datetime`). For example, see `db1_test.go` and `csv_test.go` for structs
+which work fine despite having few tags.
+
 Naturally, you can use any structs you like that meet tdb's minimum
 requirements.
 */

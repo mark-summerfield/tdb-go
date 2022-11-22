@@ -27,14 +27,29 @@ import (
 // `tdb:"MyFieldName"`, and for dates and datetimes with the type too, e.g.,
 // `tdb:"MyDateField:date"`, etc.
 //
-// See also [Unmarshal].
+// See also [MarshalDecimals] and [Unmarshal].
 func Marshal(db any) ([]byte, error) {
+	return MarshalDecimals(db, -1)
+}
+
+// MarshalDecimals is a refinement of the Marshal function.
+//
+// By default for real numbers the [Marshal] function outputs them using the
+// fewest number of decimal digits necessary. In particular this means that
+// numbers without a fractional part are output like ints (e.g., 5.0 → 5).
+//
+// To control decimal output use this function, passing a decimals value: -1
+// (or 0) signifies use minimum number of places to preserve value, e.g, 5.0
+// → 5 (this is the default). 1-19 means use exactly that number; any other
+// value means use -1.
+func MarshalDecimals(db any, decimals int) ([]byte, error) {
 	var out bytes.Buffer
 	dbVal := reflect.ValueOf(db)
 	if dbVal.Kind() == reflect.Ptr {
 		dbVal = dbVal.Elem()
 	}
 	if dbVal.Kind() == reflect.Struct {
+		dp := sanitizedDecimals(decimals)
 		dbType := dbVal.Type()
 		for i := 0; i < dbVal.NumField(); i++ {
 			field := dbVal.Field(i)
@@ -44,8 +59,8 @@ func Marshal(db any) ([]byte, error) {
 			}
 			if field.Kind() == reflect.Slice {
 				if field.Len() > 0 {
-					if err := marshalTable(&out, field,
-						tableName); err != nil {
+					if err := marshalTable(&out, field, tableName,
+						dp); err != nil {
 						return nil, err
 					}
 				}
@@ -64,8 +79,8 @@ func Marshal(db any) ([]byte, error) {
 	return out.Bytes(), nil
 }
 
-func marshalTable(out *bytes.Buffer, field reflect.Value,
-	tableName string) error {
+func marshalTable(out *bytes.Buffer, field reflect.Value, tableName string,
+	dp int) error {
 	if field.Len() > 0 {
 		dateIndexes, fieldNameForIndex, err := marshalMetaData(
 			out, tableName, field.Index(0).Interface())
@@ -74,8 +89,8 @@ func marshalTable(out *bytes.Buffer, field reflect.Value,
 		}
 		for i := 0; i < field.Len(); i++ {
 			record := field.Index(i).Interface()
-			if err := marshalRecord(out, record, dateIndexes,
-				tableName, fieldNameForIndex); err != nil {
+			if err := marshalRecord(out, record, dateIndexes, tableName,
+				fieldNameForIndex, dp); err != nil {
 				return err
 			}
 		}
@@ -159,9 +174,8 @@ func marshalTableMetaData(out *bytes.Buffer, field reflect.Value, typeName,
 }
 
 func marshalRecord(out *bytes.Buffer, record any, dateIndexes gset.Set[int],
-	tableName string, fieldNameForIndex map[int]string) error {
+	tableName string, fieldNameForIndex map[int]string, dp int) error {
 	recVal := reflect.ValueOf(record)
-	dp := getDecimalPlaces()
 	sep := ""
 	for i := 0; i < recVal.NumField(); i++ {
 		out.WriteString(sep)
@@ -291,12 +305,10 @@ func parseTag(name, tag string) (string, string) {
 	}
 }
 
-func getDecimalPlaces() int {
-	switch DecimalPlaces {
-	case -1, 0:
-		return -1
+func sanitizedDecimals(decimals int) int {
+	switch decimals {
 	case 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19:
-		return DecimalPlaces
+		return decimals
 	}
-	return 19
+	return -1
 }

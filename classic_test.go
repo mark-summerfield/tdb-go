@@ -94,10 +94,8 @@ func ExampleUnmarshal() {
 }
 
 func TestClassic(t *testing.T) {
-	tdb.DecimalPlaces = 1
-	defer func() { tdb.DecimalPlaces = -1 }()
 	db := makeClassic(t)
-	raw, err := tdb.Marshal(db)
+	raw, err := tdb.MarshalDecimals(db, 1)
 	if err != nil {
 		t.Error(err)
 	}
@@ -115,7 +113,7 @@ func TestClassic(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	raw2, err := tdb.Marshal(database)
+	raw2, err := tdb.MarshalDecimals(database, 1)
 	if err != nil {
 		t.Error(err)
 	}
