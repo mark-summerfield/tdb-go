@@ -19,10 +19,6 @@ func (me metaDataType) addTable(tableName, tagName string) *metaTableType {
 	return &table
 }
 
-func (me metaDataType) tableByName(name string) *metaTableType {
-	return me[name]
-}
-
 type metaTableType struct {
 	tableName    string
 	tagName      string
@@ -72,14 +68,6 @@ func (me *metaTableType) field(index int) *metaFieldType {
 	return me.fields[index]
 }
 
-func (me *metaTableType) fieldByName(name string) *metaFieldType {
-	return me.fieldForName[name]
-}
-
-func (me *metaTableType) match(name string) bool {
-	return name == me.tableName || name == me.tagName
-}
-
 type metaFieldType struct {
 	fieldName string
 	tagName   string
@@ -91,10 +79,6 @@ func (me *metaFieldType) name() string {
 		return me.tagName
 	}
 	return me.fieldName
-}
-
-func (me *metaFieldType) match(name string) bool {
-	return name == me.fieldName || name == me.tagName
 }
 
 type fieldKind uint8

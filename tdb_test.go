@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
+	"time"
 )
 
 func compare(n int, raw []byte, expected string, t *testing.T) {
@@ -26,6 +27,22 @@ func expectError(code int, err error, t *testing.T) {
 	}
 }
 
+type Database struct {
+	Places    []Place
+	LineItems []Item `tdb:"Items"`
+}
+
+type Place struct {
+	Pid  int `tdb:"PID"`
+	Name string
+}
+
+type Item struct {
+	Iid         int       `tdb:"IID"`
+	Description string    `tdb:"Desc:str"`
+	When        time.Time `tdb:"date"`
+}
+
 type Record struct {
 	AField int
 }
@@ -40,6 +57,22 @@ func Test001(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 	compare(1, raw, "[Records AField int\n%\n2\n3\n5\n]\n", t)
+}
+
+func Test002(t *testing.T) {
+	type DBA struct {
+		Places []Place
+	}
+	data := `[Places PID int Name str
+%
+801 <One>
+802 <Two>
+]`
+	db := DBA{}
+	if err := Unmarshal([]byte(data), &db); err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	fmt.Println("Test002", db)
 }
 
 func TestE100(t *testing.T) {
