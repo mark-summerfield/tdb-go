@@ -159,6 +159,7 @@ func marshalTableMetaData(out *bytes.Buffer, field reflect.Value, typeName,
 func marshalRecord(out *bytes.Buffer, record any, dateIndexes gset.Set[int],
 	tableName string, fieldNameForIndex map[int]string) error {
 	recVal := reflect.ValueOf(record)
+	dp := getDecimalPlaces()
 	sep := ""
 	for i := 0; i < recVal.NumField(); i++ {
 		out.WriteString(sep)
@@ -186,16 +187,14 @@ func marshalRecord(out *bytes.Buffer, record any, dateIndexes gset.Set[int],
 			if gong.IsRealClose(r, RealSentinal) {
 				out.WriteByte('!')
 			} else {
-				out.WriteString(strconv.FormatFloat(r, 'f',
-					getDecimalPlaces(), 32))
+				out.WriteString(strconv.FormatFloat(r, 'f', dp, 32))
 			}
 		case reflect.Float64:
 			r := field.Float()
 			if gong.IsRealClose(r, RealSentinal) {
 				out.WriteByte('!')
 			} else {
-				out.WriteString(strconv.FormatFloat(r, 'f',
-					getDecimalPlaces(), 64))
+				out.WriteString(strconv.FormatFloat(r, 'f', dp, 64))
 			}
 		case reflect.String:
 			s := field.String()

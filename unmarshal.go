@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -396,8 +397,12 @@ func readDateTime(data []byte, format string,
 	}
 	x, err := time.Parse(format, string(raw))
 	if err != nil {
-		return data, DateSentinal, fmt.Errorf("e%d#%d:invalid date/time",
-			e127, *lino)
+		what := "date"
+		if strings.LastIndexByte(format, 'T') != -1 {
+			what = "datetime"
+		}
+		return data, DateSentinal, fmt.Errorf("e%d#%d:invalid %s", e127,
+			*lino, what)
 	}
 	return data, x, nil
 }
