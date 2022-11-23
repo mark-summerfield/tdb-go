@@ -17,7 +17,7 @@ func main() {
 func getConfig() config {
 	parser := clip.NewParser()
 	parser.LongDesc = "Converts Tdb or CSV input to CSV, JSON, SQLite " +
-		"Tdb, UXF, or XML."
+		"Tdb, UXF, or XML.\n\nUse -- before the positionals if either is -."
 	parser.PositionalCount = clip.TwoPositionals
 	parser.PositionalHelp = "FILE1 is - for stdin or a .csv, .tdb, or " +
 		".tdb.gz file.\n\nFILE2 is - for stdout (in Tdb format), or a " +
