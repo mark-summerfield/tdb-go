@@ -6,8 +6,33 @@ package main
 import (
 	"fmt"
 	//"github.com/mark-summerfield/tdb"
+	"github.com/mark-summerfield/clip"
 )
 
 func main() {
-	fmt.Println("TODO tdb compare | format | lint")
+	config := getConfig()
+	fmt.Println(config)
+}
+
+func getConfig() config {
+	parser := clip.NewParser()
+	parser.LongDesc = "Converts Tdb or CSV input to CSV, JSON, SQLite " +
+		"Tdb, UXF, or XML."
+	parser.PositionalCount = clip.TwoPositionals
+	parser.PositionalHelp = "FILE1 is - for stdin or a .csv, .tdb, or " +
+		".tdb.gz file.\n\nFILE2 is - for stdout (in Tdb format), or a " +
+		".csv, .json, .sqlite, .tdb, .tdb.gz, .uxf, .uxf.gz, or .xml file."
+	decimalsOpt := parser.IntInRange("decimals", "How many decimal digits "+
+		"to use. The default is as few as possible. Range 1-19.", 1, 19, -1)
+	if err := parser.Parse(); err != nil {
+		fmt.Println(err)
+	}
+	return config{decimalsOpt.Value(), parser.Positionals[0],
+		parser.Positionals[1]}
+}
+
+type config struct {
+	decimals int
+	infile   string
+	outfile  string
 }

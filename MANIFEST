@@ -12,14 +12,7 @@ tdb1_test.go
 tdb2_test.go
 tdb3_test.go
 
-# TODO
-# tdb [OPTIONS] INFILE OUTFILE
-# OPTIONS -d | --decimals 0-19
-# INFILE - | file.{csv,tdb,tdb.gz}
-# OUTFILE - | file.{csv,tdb,tdb.gz,uxf,uxf.gz,sqlite,json,xml}
-# An INFILE of - means stdin and the input is assumed to be .tdb format;
-# an OUTFILE of - means stdout and the output will be .tdb format.
-bin/tdb.go
+bin/tdb.go # TODO
 
 README.md
 
