@@ -49,7 +49,7 @@ func Unmarshal(data []byte, db any) error {
 
 func getDbValue(data []byte, db any) (reflect.Value, error) {
 	var zero reflect.Value
-	if len(data) < 11 {
+	if len(data) < 10 {
 		return zero, fmt.Errorf("e%d#data holds invalid Tdb text", e107)
 	}
 	dbPtr := reflect.ValueOf(db)
@@ -148,6 +148,10 @@ func readRecords(data []byte, metaTable *metaTableType, dbVal reflect.Value,
 		}
 		if column != oldColumn {
 			oldColumn = column
+			err = checkField(recVal, column, metaTable.Len(), *lino)
+			if err != nil {
+				return data, err
+			}
 			field = recVal.Field(column)
 			metaField = metaTable.field(column)
 		}
@@ -248,6 +252,18 @@ func startRecord(data []byte, inRecord *bool, oldColumn, column,
 			*lino)
 	}
 	return data, nil
+}
+
+func checkField(recVal reflect.Value, column, size, lino int) error {
+	if !recVal.Type().Field(column).IsExported() {
+		return fmt.Errorf(
+			"e%d#%d:can't unmarshal to an unexported field: %q",
+			e122, lino, recVal.Type().Field(column).Name)
+	}
+	if column >= size {
+		return fmt.Errorf("e%d#%d:missing field name or type", e129, lino)
+	}
+	return nil
 }
 
 func handleSentinal(data []byte, metaField *metaFieldType,

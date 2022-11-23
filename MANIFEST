@@ -1,7 +1,4 @@
-# TODO add a test (or ✗) for every e-code
 # TODO bin/tdb.go
-# TODO convert/tdbconvert.go
-# TODO regression.py (for language-agnostic testing; see uxf for eg)
 doc.go
 tdb.go
 marshal.go
@@ -10,18 +7,25 @@ metadata.go
 util.go
 consts.go
 
-tdb_test.go # TODO Unmarshal tests
-db1_test.go
-csv_test.go
-classic_test.go
+tdb_test.go
+tdb1_test.go
+tdb2_test.go
+tdb3_test.go
 
-bin/tdb.go # TODO tdb compare format lint
-convert/tdbconvert.go # TODO tdb ↔ sqlite csv uxf json etc.
+# TODO
+# tdb [OPTIONS] INFILE OUTFILE
+# OPTIONS -d | --decimals 0-19
+# INFILE - | file.{csv,tdb,tdb.gz}
+# OUTFILE - | file.{csv,tdb,tdb.gz,uxf,uxf.gz,sqlite,json,xml}
+# An INFILE of - means stdin and the input is assumed to be .tdb format;
+# an OUTFILE of - means stdout and the output will be .tdb format.
+bin/tdb.go
 
 README.md
 
 eg/classic.tdb
 eg/db1.tdb
 eg/csv.tdb
+eg/incidents.tdb
 
 st.sh

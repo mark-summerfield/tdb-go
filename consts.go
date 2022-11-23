@@ -39,30 +39,31 @@ const (
 	e102              // ✔
 	e103              // ✔
 	e104              // ✔
-	e105              // TODO
-	e106              // TODO
-	e107              // TODO
-	e108              // TODO
-	e109              // TODO
-	e110              // TODO
-	e111              // TODO
-	e112              // TODO
-	e113              // TODO
-	e114              // TODO
-	e115              // TODO
-	e116              // TODO
-	e117              // TODO
-	e118              // TODO
-	e119              // TODO
-	e120              // TODO
-	e121              // TODO
-	e122              // TODO
-	e123              // TODO
-	e124              // TODO
-	e125              // TODO
-	e126              // TODO
-	e127              // TODO
-	e128              // TODO
+	e105              // ✗
+	e106              // ✗
+	e107              // ✔
+	e108              // ✔
+	e109              // ✔
+	e110              // ✔
+	e111              // ✗
+	e112              // ✔
+	e113              // ✗
+	e114              // ✔
+	e115              // ✔
+	e116              // ✔
+	e117              // ✔
+	e118              // ✔
+	e119              // ✔
+	e120              // ✔
+	e121              // ✔
+	e122              // ✔
+	e123              // ✔
+	e124              // ✔
+	e125              // ✔
+	e126              // ✔
+	e127              // ✔
+	e128              // ✗
+	e129              // ✔
 )
 
 func init() {

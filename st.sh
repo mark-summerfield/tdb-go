@@ -1,5 +1,5 @@
 #!/bin/bash
-clc -s -e doc.go csv_test.go classic_test.go tdb_test.go db1_test.go eg bin
+clc -s -e eg doc.go tdb_test.go tdb1_test.go tdb2_test.go tdb3_test.go
 go mod tidy
 go fmt .
 staticcheck .

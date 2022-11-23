@@ -1,20 +1,22 @@
 package tdb
 
 import (
+	_ "embed"
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 	"testing"
 	"time"
 )
 
-func compare(n int, raw []byte, expected string, t *testing.T) {
+func compare(name string, raw []byte, expected string, t *testing.T) {
 	actual := string(raw)
 	if actual != expected {
 		actual = strings.TrimSpace(actual)
 		expected = strings.TrimSpace(expected)
 		if actual != expected {
-			t.Errorf("\nTest%03d:\nexpected: %q !=\nactual:   %q", n,
+			t.Errorf("\nTest%s:\nexpected: %q !=\nactual:   %q", name,
 				expected, actual)
 		}
 	}
@@ -22,7 +24,7 @@ func compare(n int, raw []byte, expected string, t *testing.T) {
 
 func expectError(code int, err error, t *testing.T) {
 	if err == nil {
-		t.Errorf("TestE%03d: expected e%d#…", code, code)
+		t.Errorf("TestE%03d: expected e%d#…, got nil", code, code)
 	} else {
 		e := err.Error()
 		found, _ := regexp.MatchString(fmt.Sprintf("^e%d#", code), e)
@@ -51,17 +53,26 @@ type Item struct {
 type Record struct {
 	AField int
 }
+
 type ADatabase struct {
 	Records []Record
 }
 
 func Test001(t *testing.T) {
-	d := ADatabase{Records: []Record{{2}, {3}, {5}}}
-	raw, err := Marshal(d)
+	d1 := ADatabase{Records: []Record{{2}, {3}, {5}}}
+	raw, err := Marshal(d1)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
-	compare(1, raw, "[Records AField int\n%\n2\n3\n5\n]\n", t)
+	compare("001", raw, "[Records AField int\n%\n2\n3\n5\n]\n", t)
+	d2 := ADatabase{}
+	err = Unmarshal(raw, &d2)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if !reflect.DeepEqual(d1, d2) {
+		t.Errorf("unexpectedly unequal:\nONE: %v\nTWO: %v", d1, d2)
+	}
 }
 
 func Test002(t *testing.T) {
@@ -81,7 +92,38 @@ func Test002(t *testing.T) {
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
-	compare(2, raw, data, t)
+	compare("002", raw, data, t)
+}
+
+//go:embed eg/incidents.tdb
+var Incidents string
+
+func TestIncidents(t *testing.T) {
+	type Incident struct {
+		Report_ID                   string
+		Date                        time.Time `tdb:"date"`
+		Aircraft_ID                 string
+		Aircraft_Type               string
+		Pilot_Percent_Hours_on_Type float32
+		Pilot_Total_Hours           int
+		MidAir                      bool
+		Airport                     string
+		Narrative                   string
+	}
+
+	type IncidentsDb struct {
+		Aircraft_Incidents []Incident
+	}
+
+	incidents := IncidentsDb{}
+	if err := Unmarshal([]byte(Incidents), &incidents); err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	raw, err := MarshalDecimals(incidents, 4)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	compare("Incidents", raw, Incidents, t)
 }
 
 func TestE100(t *testing.T) {
@@ -151,4 +193,265 @@ func TestE104(t *testing.T) {
 	}
 	_, err := Marshal(d)
 	expectError(e104, err, t)
+}
+
+func TestE107(t *testing.T) {
+	type Record struct {
+		F int
+	}
+	type Database struct {
+		Records []Record
+	}
+	db := Database{}
+	raw := []byte("[T F int%")
+	err := Unmarshal(raw, &db)
+	expectError(e107, err, t)
+}
+
+func TestE108(t *testing.T) {
+	type Record struct {
+		F int
+	}
+	type Database struct {
+		Records []Record
+	}
+	db := Database{}
+	raw := []byte("[T F int%]")
+	err := Unmarshal(raw, db)
+	expectError(e108, err, t)
+}
+
+func TestE109(t *testing.T) {
+	type Record struct {
+		F int
+	}
+	db := make([]Record, 0)
+	raw := []byte("[T F int%]")
+	err := Unmarshal(raw, &db)
+	expectError(e109, err, t)
+}
+
+func TestE110(t *testing.T) {
+	type Record struct {
+		F []byte
+	}
+	type Database struct {
+		T []Record
+	}
+	db := Database{}
+	raw := []byte("[T F bytes\n%\n(20AC\n]")
+	err := Unmarshal(raw, &db)
+	expectError(e110, err, t)
+}
+
+func TestE112(t *testing.T) {
+	type Record struct {
+		F []byte
+	}
+	type Database struct {
+		T []Record
+	}
+	db := Database{}
+	raw := []byte("[T F uint\n%\n(20AC)\n]")
+	err := Unmarshal(raw, &db)
+	expectError(e112, err, t)
+}
+
+func TestE114(t *testing.T) {
+	type Record struct {
+		F int
+		G int
+	}
+	type Database struct {
+		T []Record
+	}
+	db := Database{}
+	raw := []byte("[T F int G int\n%\n1 2\n3 F\n]")
+	err := Unmarshal(raw, &db)
+	expectError(e114, err, t)
+}
+
+func TestE115(t *testing.T) {
+	type Record struct {
+		F bool
+	}
+	type Database struct {
+		T []Record
+	}
+	db := Database{}
+	raw := []byte("[T F bool\n%\nT !\n]")
+	err := Unmarshal(raw, &db)
+	expectError(e115, err, t)
+}
+
+func TestE116(t *testing.T) {
+	type Record struct {
+		F bool
+	}
+	type Database struct {
+		T []Record
+	}
+	db := Database{}
+	raw := []byte("[T F bool\n%\nT ()\n]")
+	err := Unmarshal(raw, &db)
+	expectError(e116, err, t)
+}
+
+func TestE117(t *testing.T) {
+	type Record struct {
+		F bool
+	}
+	type Database struct {
+		T []Record
+	}
+	db := Database{}
+	raw := []byte("[T F bool\n%\nT <>\n]")
+	err := Unmarshal(raw, &db)
+	expectError(e117, err, t)
+}
+
+func TestE118(t *testing.T) {
+	type Record struct {
+		F bool
+	}
+	type Database struct {
+		T []Record
+	}
+	db := Database{}
+	raw := []byte("[T F bool\n%\nT -1\n]")
+	err := Unmarshal(raw, &db)
+	expectError(e118, err, t)
+}
+
+func TestE119(t *testing.T) {
+	type Record struct {
+		F bool
+	}
+	type Database struct {
+		T []Record
+	}
+	db := Database{}
+	raw := []byte("[T F bool\n%\nT 0\n]")
+	err := Unmarshal(raw, &db)
+	expectError(e119, err, t)
+}
+
+func TestE120(t *testing.T) {
+	type Record struct {
+		F int
+		G int
+	}
+	type Database struct {
+		T []Record
+	}
+	db := Database{}
+	raw := []byte("[T F int G int\n%\n1 2\n3\n]")
+	err := Unmarshal(raw, &db)
+	expectError(e120, err, t)
+}
+
+func TestE121(t *testing.T) {
+	type Record struct {
+		F bool
+	}
+	type Database struct {
+		T []Record
+	}
+	db := Database{}
+	raw := []byte("[T F bool\n%\nT x\n]")
+	err := Unmarshal(raw, &db)
+	expectError(e121, err, t)
+}
+
+func TestE122(t *testing.T) {
+	type Record struct {
+		f int
+		G int
+	}
+	type Database struct {
+		T []Record
+	}
+	db := Database{[]Record{{f: 1, G: 2}}} // filled in purely for linting
+	raw := []byte("[T f int G int\n%\n1 2\n3 4\n]")
+	err := Unmarshal(raw, &db)
+	expectError(e122, err, t)
+}
+
+func TestE123(t *testing.T) {
+	type Record struct {
+		F []byte
+	}
+	type Database struct {
+		T []Record
+	}
+	db := Database{}
+	raw := []byte("[T F bytes\n%\n(20AC) (EF1G)\n]")
+	err := Unmarshal(raw, &db)
+	expectError(e123, err, t)
+}
+
+func TestE124(t *testing.T) {
+	type Record struct {
+		F int
+		G int
+	}
+	type Database struct {
+		T []Record
+	}
+	db := Database{}
+	raw := []byte("[T F int G int\n%\n1 2 3 4")
+	err := Unmarshal(raw, &db)
+	expectError(e124, err, t)
+}
+
+func TestE125(t *testing.T) {
+	type Record struct {
+		F int
+	}
+	type Database struct {
+		T []Record
+	}
+	db := Database{}
+	raw := []byte("[T F int\n%\n1 1-0\n]")
+	err := Unmarshal(raw, &db)
+	expectError(e125, err, t)
+}
+
+func TestE126(t *testing.T) {
+	type Record struct {
+		F float32
+	}
+	type Database struct {
+		T []Record
+	}
+	db := Database{}
+	raw := []byte("[T F real\n%\n1 1-0\n]")
+	err := Unmarshal(raw, &db)
+	expectError(e126, err, t)
+}
+
+func TestE127(t *testing.T) {
+	type Record struct {
+		F time.Time
+	}
+	type Database struct {
+		T []Record
+	}
+	db := Database{}
+	raw := []byte("[T F date\n%\n2020-1-9-3\n]")
+	err := Unmarshal(raw, &db)
+	expectError(e127, err, t)
+}
+
+func TestE129(t *testing.T) {
+	type Record struct {
+		F []byte
+	}
+	type Database struct {
+		T []Record
+	}
+	db := Database{}
+	raw := []byte("[T F\n%\n(20AC)\n]")
+	err := Unmarshal(raw, &db)
+	expectError(e129, err, t)
 }
