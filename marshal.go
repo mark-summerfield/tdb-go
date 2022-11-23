@@ -42,6 +42,8 @@ func Marshal(db any) ([]byte, error) {
 // 1-19 to use exactly that number of decimal digits; any other value means
 // use the minimum number of decimal digits necessary (which may be none for
 // numbers whose fractional part is 0).
+//
+// See also [Marshal] and [Unmarshal].
 func MarshalDecimals(db any, decimals int) ([]byte, error) {
 	var out bytes.Buffer
 	dbVal := reflect.ValueOf(db)
