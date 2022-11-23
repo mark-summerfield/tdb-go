@@ -21,4 +21,6 @@ eg/db1.tdb
 eg/csv.tdb
 eg/incidents.tdb
 
+go.mod
+
 st.sh
