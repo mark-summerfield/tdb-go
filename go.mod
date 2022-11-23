@@ -3,8 +3,8 @@ module github.com/mark-summerfield/tdb-go
 go 1.19
 
 require (
-	github.com/mark-summerfield/clip v0.4.5
-	github.com/mark-summerfield/gong v0.5.2
+	github.com/mark-summerfield/clip v0.4.7
+	github.com/mark-summerfield/gong v0.6.1
 	github.com/mark-summerfield/gset v0.8.0
 )
 

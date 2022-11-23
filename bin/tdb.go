@@ -20,10 +20,10 @@ func getConfig() config {
 		"Tdb, UXF, or XML.\n\nUse -- before the positionals if either is -."
 	parser.PositionalCount = clip.TwoPositionals
 	parser.PositionalHelp = "FILE1 is - for stdin or a .csv, .tdb, or " +
-		".tdb.gz file.\n\nFILE2 is - for stdout (in Tdb format), or a " +
+		".tdb.gz file. FILE2 is - for stdout (in Tdb format), or a " +
 		".csv, .json, .sqlite, .tdb, .tdb.gz, .uxf, .uxf.gz, or .xml file."
 	decimalsOpt := parser.IntInRange("decimals", "How many decimal digits "+
-		"to use. The default is as few as possible. Range 1-19.", 1, 19, -1)
+		"to use. Range 1-19 or 0 (few as possible; the default).", 1, 19, 0)
 	if err := parser.Parse(); err != nil {
 		fmt.Println(err)
 	}
