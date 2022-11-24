@@ -1,7 +1,13 @@
 # Tdb Overview
 
-Text database (Tdb) is a plain text human readable typed database storage
-format.
+Tdb “Text DataBase” format is a plain text human readable typed database
+storage format.
+
+Tdb provides a superior alternative to CSV. In particular, Tdb tables are
+named and Tdb fields are strictly typed. Also, there is a clear distinction
+between field names and data values, and strings respect whitespace
+(including newlines) and have no problems with commas, quotes, etc.
+Perhaps best of all, a single Tdb file may contain one—or more—tables.
 
 - [Datatypes](#datatypes)
 - [Examples](#examples)
