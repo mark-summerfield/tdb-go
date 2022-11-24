@@ -35,8 +35,7 @@ Tdb supports the following seven built-in datatypes.
 |`datetime` |`1808-08-08T08:08:08`|`2022-04-01T16:11:51`|ISO8601 YYYY-MM-DDTHH[:MM[:SS]] format; 1-sec resolution no timezone support.|
 |`int`      |`-1808080808`|`-192` `+234` `7891409`|Standard integers with optional sign.|
 |`real`     |`-1808080808.0808`|`0.15` `0.7e-9` `2245.389`|Standard and scientific notation.|
-|`str`      ||`<Some text which may include newlines>`|No sentinal; use `<>`
-empty. For &, <, >, use \&amp;, \&lt;, \&gt; respectively.|
+|`str`      ||`<Some text which may include newlines>`|No sentinal; use `<>` empty. For &, <, >, use \&amp;, \&lt;, \&gt; respectively.|
 
 All fields are _not null_ and must contain a valid value of the field's
 type. For `date`, `datetime`, `int`, and `real` fields there is a sentinal
