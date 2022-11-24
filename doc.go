@@ -3,12 +3,23 @@
 
 /*
 Tdb provides [Marshal] and [Unmarshal] functions for writing and reading
-[]byte slices to or from .tdb format.
+[]byte slices to or from Tdb “Text DataBase” format.
 
 To use these functions you must provide a populated (for Marshal) or
 unpopulated (for Unmarshal) struct. This outer struct represents a text
 database. The outer struct must contain one or more public (inner) fields,
 each of type slice of struct. Each inner field represents a database table, and each record is represented by an inner field struct.
+
+# Tdb format
+
+Tdb provides a superior alternative to CSV. In particular, Tdb tables are
+named and Tdb fields are strictly typed. Also, there is a clear distinction
+between field names and data values, and strings respect whitespace
+(including newlines) and have no problems with commas, quotes, etc.. Perhaps
+best of all, a single Tdb file may contain one—or more—tables. See README.md
+at https://github.com/mark-summerfield/tdb-go for more about the Tdb format.
+
+# Using the tdb package
 
 Import using:
 
@@ -54,15 +65,15 @@ The [Marshal] and [Unmarshal] examples use these structs:
 	}
 
 Although struct tags are used extensively here, they are only actually
-required for two purposes. A tag is needed if a .tdb file's table or field
+required for two purposes. A tag is needed if a Tdb file's table or field
 name is different from the corresponding struct name. And a tag is needed
 for time.Time fields if the field is a Tdb `date` field (since the default
 is `datetime`). For example, see `db1_test.go` and `csv_test.go` for structs
 which work fine despite having few tags.
 
-The order of tables in a .tdb file in relation to the outer struct doesn't
+The order of tables in a Tdb file in relation to the outer struct doesn't
 matter. However, the order of fields within a table must match between the
-.tdb file's table definition and the corresponding struct.
+Tdb file's table definition and the corresponding struct.
 
 Naturally, you can use any structs you like that meet tdb's minimum
 requirements.

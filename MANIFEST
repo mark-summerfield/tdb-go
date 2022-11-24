@@ -1,4 +1,3 @@
-# TODO bin/tdb.go
 doc.go
 tdb.go
 marshal.go
@@ -11,8 +10,6 @@ tdb_test.go
 tdb1_test.go
 tdb2_test.go
 tdb3_test.go
-
-bin/tdb.go # TODO
 
 README.md
 
