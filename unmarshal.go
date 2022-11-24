@@ -409,7 +409,7 @@ func readReal(data []byte, lino *int) ([]byte, float64, error) {
 
 func readDateTime(data []byte, format string,
 	lino *int) ([]byte, time.Time, error) {
-	data, raw, err := scan(data, []byte("-0123456789"), lino)
+	data, raw, err := scan(data, []byte("-0123456789T:"), lino)
 	if err != nil {
 		return data, DateSentinal, err
 	}
