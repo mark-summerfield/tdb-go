@@ -43,14 +43,8 @@ func Unescape(s string) string {
 // returns false.
 func IsSentinal(value any) bool {
 	switch value := value.(type) {
-	case bool:
-		return !value
-	case []byte:
-		return len(value) == 1 && value[0] == ByteSentinal
 	case time.Time:
 		return value.Equal(DateSentinal) || value.Equal(DateTimeSentinal)
-	case int8, int16, uint16, uint32, uint64, uint:
-		return false
 	case int32:
 		return int(value) == IntSentinal
 	case int64:
@@ -61,8 +55,6 @@ func IsSentinal(value any) bool {
 		return gong.IsRealClose(float64(value), RealSentinal)
 	case float64:
 		return gong.IsRealClose(value, RealSentinal)
-	case string:
-		return value == StrSentinal
 	}
 	return false
 }

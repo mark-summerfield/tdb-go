@@ -37,8 +37,8 @@ Types:
 	| real     | float64 float32            |
 	| str      | string                     |
 
-The tdb package provides constants for each type's sentinal value (except
-for “bool“s for which there is no sentinal value).
+The tdb package provides constants for those types which have a sentinal
+value.
 
 The [Marshal] and [Unmarshal] examples use these structs:
 

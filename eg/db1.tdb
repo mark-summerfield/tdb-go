@@ -1,12 +1,12 @@
 [Customers CID int Company str Address str Contact str Email str Icon bytes
 %
 50 <Best People> <123 Somewhere> <John Doe> <j@doe.com> (89504e470d0a1a0a0000000d494844520000000c0000000c080600000056755ce7000000097048597300000ec400000ec401952b0e1b0000002849444154289163646068f8cf4002602245317d34b0600a3530621183fb7310fa81640d8c832fe2002c7f051786cbfa670000000049454e44ae426082)
-19 <Supersuppliers> ! <Jane Doe> <jane@super.com> !
+19 <Supersuppliers> <> <Jane Doe> <jane@super.com> ()
 ]
 [Invoices INUM int CID int Raised_Date date Due_Date date Paid bool Description str
 %
 152 50 2022-01-17 2022-02-17 F <COD>
-153 19 2022-01-19 2022-02-19 T !
+153 19 2022-01-19 2022-02-19 T <>
 ]
 [Items LIID int INUM int Delivery_Date date Unit_Price real Quantity int Description str
 %

@@ -269,11 +269,10 @@ func checkField(recVal reflect.Value, column, size, lino int) error {
 func handleSentinal(data []byte, metaField *metaFieldType,
 	field reflect.Value, lino *int) ([]byte, error) {
 	switch metaField.kind {
-	case boolField:
+	case boolField, bytesField, strField:
 		return data, fmt.Errorf(
-			"e%d#%d:the sentinal is invalid for bool fields", e115, lino)
-	case bytesField:
-		field.SetBytes(BytesSentinal)
+			"e%d#%d:the sentinal is invalid for %s fields", e115, lino,
+			metaField.kind)
 	case dateField:
 		field.Set(reflect.ValueOf(DateSentinal))
 	case dateTimeField:
@@ -282,8 +281,6 @@ func handleSentinal(data []byte, metaField *metaFieldType,
 		field.SetInt(IntSentinal)
 	case realField:
 		field.SetFloat(RealSentinal)
-	case strField:
-		field.SetString(StrSentinal)
 	}
 	return data[1:], nil
 }

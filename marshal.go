@@ -216,11 +216,7 @@ func marshalRecord(out *bytes.Buffer, record any, dateIndexes gset.Set[int],
 			}
 		case reflect.String:
 			s := field.String()
-			if s == StrSentinal {
-				out.WriteByte('!')
-			} else {
-				out.WriteString(fmt.Sprintf("<%s>", Escape(s)))
-			}
+			out.WriteString(fmt.Sprintf("<%s>", Escape(s)))
 		case reflect.Slice:
 			if err := marshalSliceField(out, field, tableName,
 				fieldNameForIndex[i]); err != nil {
@@ -243,13 +239,9 @@ func marshalSliceField(out *bytes.Buffer, field reflect.Value, tableName,
 	x := field.Interface()
 	if reflect.TypeOf(x) == byteSliceType {
 		raw := field.Bytes()
-		if len(raw) == 1 && raw[0] == ByteSentinal {
-			out.WriteByte('!')
-		} else {
-			out.WriteByte('(')
-			out.WriteString(hex.EncodeToString(raw))
-			out.WriteByte(')')
-		}
+		out.WriteByte('(')
+		out.WriteString(hex.EncodeToString(raw))
+		out.WriteByte(')')
 	} else {
 		return fmt.Errorf("e%d#%s.%s:unrecognized slice's field type %T",
 			e105, tableName, fieldName, x)

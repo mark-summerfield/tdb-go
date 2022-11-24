@@ -90,8 +90,8 @@ func makeDb(t *testing.T) db1Database {
 		Customers: []Customer{
 			{50, "Best People", "123 Somewhere", "John Doe", "j@doe.com",
 				icon},
-			{19, "Supersuppliers", tdb.StrSentinal, "Jane Doe",
-				"jane@super.com", tdb.BytesSentinal},
+			{19, "Supersuppliers", "", "Jane Doe",
+				"jane@super.com", []byte{}},
 		},
 		Invoices: []Invoice{
 			{152, 50, time.Date(2022,
@@ -101,7 +101,7 @@ func makeDb(t *testing.T) db1Database {
 			{153, 19,
 				time.Date(2022, time.January, 19, 0, 0, 0, 0, time.UTC),
 				time.Date(2022, time.February, 19, 0, 0, 0, 0, time.UTC),
-				true, tdb.StrSentinal},
+				true, ""},
 		},
 		LineItems: []LineItem{
 			{1839, 152,

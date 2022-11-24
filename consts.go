@@ -11,24 +11,21 @@ import (
 
 // These are really constants.
 var (
-	BytesSentinal    = []byte{ByteSentinal}
 	DateSentinal     = time.Date(1808, time.August, 8, 0, 0, 0, 0, time.UTC)
 	DateTimeSentinal = time.Date(1808, time.August, 8, 8, 8, 8, 0, time.UTC)
-	byteSliceType    = reflect.TypeOf(BytesSentinal)
+	byteSliceType    = reflect.TypeOf([]byte{})
 	dateTimeType     = reflect.TypeOf(DateSentinal)
 	reservedWords    gset.Set[string]
 	emptyBytes       = []byte{}
 )
 
 const (
-	ByteSentinal        byte = 0x04
-	DateStrSentinal          = "1808-08-08"
-	DateTimeStrSentinal      = "1808-08-08T08:08:08"
-	IntSentinal              = -1808080808
-	RealSentinal             = -1808080808.0808
-	StrSentinal              = "\x04"
-	DateFormat               = "2006-01-02"
-	DateTimeFormat           = "2006-01-02T15:04:05"
+	DateStrSentinal     = "1808-08-08"
+	DateTimeStrSentinal = "1808-08-08T08:08:08"
+	IntSentinal         = -1808080808
+	RealSentinal        = -1808080808.0808
+	DateFormat          = "2006-01-02"
+	DateTimeFormat      = "2006-01-02T15:04:05"
 )
 
 const (

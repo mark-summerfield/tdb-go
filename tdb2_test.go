@@ -69,7 +69,7 @@ func makeCSV(t *testing.T) csvDatabase {
 			{time.Date(2022, time.October, 2, 0, 0, 0, 0, time.UTC),
 				5.89, 1, "SX4-D1", "Eversure Sealant, 13-floz"},
 			{time.Date(2022, time.November, 13, 0, 0, 0, 0, time.UTC),
-				8.49, tdb.IntSentinal, "PV7-X2", tdb.StrSentinal},
+				8.49, tdb.IntSentinal, "PV7-X2", ""},
 		},
 	}
 }
