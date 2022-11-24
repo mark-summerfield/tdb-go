@@ -15,7 +15,7 @@ each of type slice of struct. Each inner field represents a database table, and 
 Tdb provides a superior alternative to CSV. In particular, Tdb tables are
 named and Tdb fields are strictly typed. Also, there is a clear distinction
 between field names and data values, and strings respect whitespace
-(including newlines) and have no problems with commas, quotes, etc.. Perhaps
+(including newlines) and have no problems with commas, quotes, etc. Perhaps
 best of all, a single Tdb file may contain one—or more—tables. See README.md
 at https://github.com/mark-summerfield/tdb-go for more about the Tdb format.
 
