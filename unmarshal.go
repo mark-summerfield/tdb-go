@@ -86,7 +86,7 @@ func readTableMetaData(data []byte, metaData metaDataType,
 	if err != nil {
 		return data, nil, err
 	}
-	parts := bytes.Fields(data[:end])
+	parts := bytes.Fields(bytes.TrimSpace(data[:end]))
 	var metaTable *metaTableType
 	var tableName string
 	var fieldName string
@@ -189,6 +189,16 @@ func readRecords(data []byte, metaTable *metaTableType, dbVal reflect.Value,
 			column++
 		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
 			switch metaField.kind {
+			case boolField:
+				if (data[0] == '0' || data[0] == '1') && len(data) > 1 &&
+					bytes.IndexByte([]byte{'.', 'e', 'E', '0', '1', '2',
+						'3', '4', '5', '6', '7', '8', '9'}, data[1]) == -1 {
+					data, err = handleBool(data, data[0] == '1', metaField,
+						field, lino)
+				} else {
+					err = fmt.Errorf("e%d#%d:got %c%c, expected %s", e130,
+						*lino, data[0], data[1], metaField.kind)
+				}
 			case intField:
 				data, err = handleInt(data, metaField, field, lino)
 			case realField:
@@ -199,9 +209,9 @@ func readRecords(data []byte, metaTable *metaTableType, dbVal reflect.Value,
 			case dateTimeField:
 				data, err = handleDateTime(data, DateTimeFormat, metaField,
 					field, lino)
-			default:
-				err = fmt.Errorf("e%d#%d:got -, expected %s", e119, *lino,
-					metaField.kind)
+			default: // Should never happend
+				err = fmt.Errorf("e%d#%d:got %c, expected %s", e119, *lino,
+					data[0], metaField.kind)
 			}
 			column++
 		case ']': // end of table

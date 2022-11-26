@@ -95,6 +95,26 @@ func Test002(t *testing.T) {
 	compare("002", raw, data, t)
 }
 
+func Test003(t *testing.T) {
+	type Rec struct {
+		Ok bool
+	}
+	type DBA struct {
+		Recs []Rec
+	}
+	data := "[Recs Ok bool\n%\nT f y N 1 0]"
+	expected := "[Recs Ok bool\n%\nT\nF\nT\nF\nT\nF\n]"
+	db := DBA{}
+	if err := Unmarshal([]byte(data), &db); err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	raw, err := Marshal(db)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	compare("003", raw, expected, t)
+}
+
 //go:embed eg/incidents.tdb
 var Incidents string
 
@@ -323,19 +343,6 @@ func TestE118(t *testing.T) {
 	expectError(e118, err, t)
 }
 
-func TestE119(t *testing.T) {
-	type Record struct {
-		F bool
-	}
-	type Database struct {
-		T []Record
-	}
-	db := Database{}
-	raw := []byte("[T F bool\n%\nT 0\n]")
-	err := Unmarshal(raw, &db)
-	expectError(e119, err, t)
-}
-
 func TestE120(t *testing.T) {
 	type Record struct {
 		F int
@@ -454,4 +461,17 @@ func TestE129(t *testing.T) {
 	raw := []byte("[T F\n%\n(20AC)\n]")
 	err := Unmarshal(raw, &db)
 	expectError(e129, err, t)
+}
+
+func TestE130(t *testing.T) {
+	type Record struct {
+		F bool
+	}
+	type Database struct {
+		T []Record
+	}
+	db := Database{}
+	raw := []byte("[T F bool\n%\nT 2\n]")
+	err := Unmarshal(raw, &db)
+	expectError(e130, err, t)
 }
