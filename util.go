@@ -4,8 +4,8 @@
 package tdb
 
 import (
+	"bytes"
 	"github.com/mark-summerfield/gong"
-	"strings"
 	"time"
 )
 
@@ -34,9 +34,30 @@ func Escape(s string) string {
 // follows: &amp; → &, &lt; → <, &gt; → >.
 // See also [Escape].
 func Unescape(s string) string {
-	s = strings.ReplaceAll(s, "&lt;", "<")
-	s = strings.ReplaceAll(s, "&gt;", ">")
-	return strings.ReplaceAll(s, "&amp;", "&")
+	result := make([]byte, 0, len(s))
+	raw := []byte(s)
+	for len(raw) > 0 {
+		b := raw[0]
+		if b == '&' && len(raw) > 3 {
+			raw = raw[1:]
+			end := bytes.IndexByte(raw, ';')
+			if end > -1 {
+				found := string(raw[:end])
+				if found == "lt" {
+					result = append(result, '<')
+				} else if found == "gt" {
+					result = append(result, '>')
+				} else if found == "amp" {
+					result = append(result, '&')
+				}
+				raw = raw[end+1:]
+				continue
+			}
+		}
+		result = append(result, b)
+		raw = raw[1:]
+	}
+	return string(result)
 }
 
 // IsSentinal returns true if the given value is a Tdb sentintal; otherwise
