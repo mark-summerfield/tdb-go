@@ -395,7 +395,7 @@ func readInt(data []byte, lino *int) ([]byte, int, error) {
 	if err != nil {
 		return data, 0, err
 	}
-	x, err := strconv.ParseInt(string(raw), 10, 64)
+	x, err := strconv.Atoi(string(raw))
 	if err != nil {
 		return data, 0, fmt.Errorf("e%d#%d:invalid int", e125, *lino)
 	}
