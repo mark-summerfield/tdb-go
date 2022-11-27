@@ -50,21 +50,21 @@ type Item struct {
 	When        time.Time `tdb:"date"`
 }
 
-type Record struct {
+type ARecord struct {
 	AField int
 }
 
 type ADatabase struct {
-	Records []Record
+	ARecords []ARecord
 }
 
 func Test001(t *testing.T) {
-	d1 := ADatabase{Records: []Record{{2}, {3}, {5}}}
+	d1 := ADatabase{ARecords: []ARecord{{2}, {3}, {5}}}
 	raw, err := Marshal(d1)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
-	compare("001", raw, "[Records AField int\n%\n2\n3\n5\n]\n", t)
+	compare("001", raw, "[ARecords AField int\n%\n2\n3\n5\n]\n", t)
 	d2 := ADatabase{}
 	err = Unmarshal(raw, &d2)
 	if err != nil {
@@ -165,7 +165,7 @@ func TestE102(t *testing.T) {
 	d := ADatabase{}
 	_, err := Marshal(d)
 	expectError(e102, err, t)
-	d = ADatabase{Records: []Record{}}
+	d = ADatabase{ARecords: []ARecord{}}
 	_, err = Marshal(d)
 	expectError(e102, err, t)
 }
@@ -216,11 +216,11 @@ func TestE104(t *testing.T) {
 }
 
 func TestE107(t *testing.T) {
-	type Record struct {
+	type ARecord struct {
 		F int
 	}
 	type Database struct {
-		Records []Record
+		ARecords []ARecord
 	}
 	db := Database{}
 	raw := []byte("[T F int%")
@@ -229,11 +229,11 @@ func TestE107(t *testing.T) {
 }
 
 func TestE108(t *testing.T) {
-	type Record struct {
+	type ARecord struct {
 		F int
 	}
 	type Database struct {
-		Records []Record
+		ARecords []ARecord
 	}
 	db := Database{}
 	raw := []byte("[T F int%]")
@@ -242,21 +242,21 @@ func TestE108(t *testing.T) {
 }
 
 func TestE109(t *testing.T) {
-	type Record struct {
+	type ARecord struct {
 		F int
 	}
-	db := make([]Record, 0)
+	db := make([]ARecord, 0)
 	raw := []byte("[T F int%]")
 	err := Unmarshal(raw, &db)
 	expectError(e109, err, t)
 }
 
 func TestE110(t *testing.T) {
-	type Record struct {
+	type ARecord struct {
 		F []byte
 	}
 	type Database struct {
-		T []Record
+		T []ARecord
 	}
 	db := Database{}
 	raw := []byte("[T F bytes\n%\n(20AC\n]")
@@ -265,11 +265,11 @@ func TestE110(t *testing.T) {
 }
 
 func TestE112(t *testing.T) {
-	type Record struct {
+	type ARecord struct {
 		F []byte
 	}
 	type Database struct {
-		T []Record
+		T []ARecord
 	}
 	db := Database{}
 	raw := []byte("[T F uint\n%\n(20AC)\n]")
@@ -278,12 +278,12 @@ func TestE112(t *testing.T) {
 }
 
 func TestE114(t *testing.T) {
-	type Record struct {
+	type ARecord struct {
 		F int
 		G int
 	}
 	type Database struct {
-		T []Record
+		T []ARecord
 	}
 	db := Database{}
 	raw := []byte("[T F int G int\n%\n1 2\n3 F\n]")
@@ -292,11 +292,11 @@ func TestE114(t *testing.T) {
 }
 
 func TestE115(t *testing.T) {
-	type Record struct {
+	type ARecord struct {
 		F bool
 	}
 	type Database struct {
-		T []Record
+		T []ARecord
 	}
 	db := Database{}
 	raw := []byte("[T F bool\n%\nT !\n]")
@@ -305,11 +305,11 @@ func TestE115(t *testing.T) {
 }
 
 func TestE116(t *testing.T) {
-	type Record struct {
+	type ARecord struct {
 		F bool
 	}
 	type Database struct {
-		T []Record
+		T []ARecord
 	}
 	db := Database{}
 	raw := []byte("[T F bool\n%\nT ()\n]")
@@ -318,11 +318,11 @@ func TestE116(t *testing.T) {
 }
 
 func TestE117(t *testing.T) {
-	type Record struct {
+	type ARecord struct {
 		F bool
 	}
 	type Database struct {
-		T []Record
+		T []ARecord
 	}
 	db := Database{}
 	raw := []byte("[T F bool\n%\nT <>\n]")
@@ -331,11 +331,11 @@ func TestE117(t *testing.T) {
 }
 
 func TestE118(t *testing.T) {
-	type Record struct {
+	type ARecord struct {
 		F bool
 	}
 	type Database struct {
-		T []Record
+		T []ARecord
 	}
 	db := Database{}
 	raw := []byte("[T F bool\n%\nT -1\n]")
@@ -344,12 +344,12 @@ func TestE118(t *testing.T) {
 }
 
 func TestE120(t *testing.T) {
-	type Record struct {
+	type ARecord struct {
 		F int
 		G int
 	}
 	type Database struct {
-		T []Record
+		T []ARecord
 	}
 	db := Database{}
 	raw := []byte("[T F int G int\n%\n1 2\n3\n]")
@@ -358,11 +358,11 @@ func TestE120(t *testing.T) {
 }
 
 func TestE121(t *testing.T) {
-	type Record struct {
+	type ARecord struct {
 		F bool
 	}
 	type Database struct {
-		T []Record
+		T []ARecord
 	}
 	db := Database{}
 	raw := []byte("[T F bool\n%\nT x\n]")
@@ -371,25 +371,25 @@ func TestE121(t *testing.T) {
 }
 
 func TestE122(t *testing.T) {
-	type Record struct {
+	type ARecord struct {
 		f int
 		G int
 	}
 	type Database struct {
-		T []Record
+		T []ARecord
 	}
-	db := Database{[]Record{{f: 1, G: 2}}} // filled in purely for linting
+	db := Database{[]ARecord{{f: 1, G: 2}}} // filled in purely for linting
 	raw := []byte("[T f int G int\n%\n1 2\n3 4\n]")
 	err := Unmarshal(raw, &db)
 	expectError(e122, err, t)
 }
 
 func TestE123(t *testing.T) {
-	type Record struct {
+	type ARecord struct {
 		F []byte
 	}
 	type Database struct {
-		T []Record
+		T []ARecord
 	}
 	db := Database{}
 	raw := []byte("[T F bytes\n%\n(20AC) (EF1G)\n]")
@@ -398,12 +398,12 @@ func TestE123(t *testing.T) {
 }
 
 func TestE124(t *testing.T) {
-	type Record struct {
+	type ARecord struct {
 		F int
 		G int
 	}
 	type Database struct {
-		T []Record
+		T []ARecord
 	}
 	db := Database{}
 	raw := []byte("[T F int G int\n%\n1 2 3 4")
@@ -412,11 +412,11 @@ func TestE124(t *testing.T) {
 }
 
 func TestE125(t *testing.T) {
-	type Record struct {
+	type ARecord struct {
 		F int
 	}
 	type Database struct {
-		T []Record
+		T []ARecord
 	}
 	db := Database{}
 	raw := []byte("[T F int\n%\n1 1-0\n]")
@@ -425,11 +425,11 @@ func TestE125(t *testing.T) {
 }
 
 func TestE126(t *testing.T) {
-	type Record struct {
+	type ARecord struct {
 		F float32
 	}
 	type Database struct {
-		T []Record
+		T []ARecord
 	}
 	db := Database{}
 	raw := []byte("[T F real\n%\n1 1-0\n]")
@@ -438,11 +438,11 @@ func TestE126(t *testing.T) {
 }
 
 func TestE127(t *testing.T) {
-	type Record struct {
+	type ARecord struct {
 		F time.Time
 	}
 	type Database struct {
-		T []Record
+		T []ARecord
 	}
 	db := Database{}
 	raw := []byte("[T F date\n%\n2020-1-9-3\n]")
@@ -451,11 +451,11 @@ func TestE127(t *testing.T) {
 }
 
 func TestE129(t *testing.T) {
-	type Record struct {
+	type ARecord struct {
 		F []byte
 	}
 	type Database struct {
-		T []Record
+		T []ARecord
 	}
 	db := Database{}
 	raw := []byte("[T F\n%\n(20AC)\n]")
@@ -464,11 +464,11 @@ func TestE129(t *testing.T) {
 }
 
 func TestE130(t *testing.T) {
-	type Record struct {
+	type ARecord struct {
 		F bool
 	}
 	type Database struct {
-		T []Record
+		T []ARecord
 	}
 	db := Database{}
 	raw := []byte("[T F bool\n%\nT 2\n]")

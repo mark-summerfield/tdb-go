@@ -5,103 +5,105 @@ package tdb
 
 import "strings"
 
-type metaDataType map[string]*metaTableType // key is tableName
+type metaDataType map[string]*MetaTableType // key is tableName
 
-func (me metaDataType) addTable(tableName string) *metaTableType {
-	table := metaTableType{tableName, make([]*metaFieldType, 0, 1)}
+func (me metaDataType) addTable(tableName string) *MetaTableType {
+	table := MetaTableType{tableName, make([]*MetaFieldType, 0, 1)}
 	me[tableName] = &table
 	return &table
 }
 
-type metaTableType struct {
-	name   string
-	fields []*metaFieldType
+// MetaTableType holds the name of a table and a slice of its fields (names
+// and kinds)
+type MetaTableType struct {
+	Name   string
+	Fields []*MetaFieldType
 }
 
-func (me metaTableType) String() string {
+func (me MetaTableType) String() string {
 	var s strings.Builder
 	s.WriteByte('[')
-	s.WriteString(me.name)
-	for _, field := range me.fields {
+	s.WriteString(me.Name)
+	for _, field := range me.Fields {
 		s.WriteByte(' ')
-		s.WriteString(field.name)
+		s.WriteString(field.Name)
 		s.WriteByte(' ')
-		s.WriteString(field.kind.String())
+		s.WriteString(field.Kind.String())
 	}
 	s.WriteString("%]")
 	return s.String()
 }
 
-func (me metaTableType) Len() int {
-	return len(me.fields)
+func (me MetaTableType) Len() int {
+	return len(me.Fields)
 }
 
-func (me *metaTableType) addField(fieldName, typeName string) bool {
+func (me *MetaTableType) AddField(fieldName, typeName string) bool {
 	kind, ok := newFieldKind(typeName)
 	if ok {
-		metaField := metaFieldType{fieldName, kind}
-		me.fields = append(me.fields, &metaField)
+		metaField := MetaFieldType{fieldName, kind}
+		me.Fields = append(me.Fields, &metaField)
 	}
 	return ok
 }
 
-func (me *metaTableType) field(index int) *metaFieldType {
-	return me.fields[index]
+func (me *MetaTableType) Field(index int) *MetaFieldType {
+	return me.Fields[index]
 }
 
-type metaFieldType struct {
-	name string
-	kind fieldKind
+type MetaFieldType struct {
+	Name string
+	Kind FieldKind
 }
 
-type fieldKind uint8
+type FieldKind uint8
 
 const (
-	boolField fieldKind = 1 << iota
-	bytesField
-	dateField
-	dateTimeField
-	intField
-	realField
-	strField
+	BoolField FieldKind = 1 << iota
+	BytesField
+	DateField
+	DateTimeField
+	IntField
+	RealField
+	StrField
 )
 
-func newFieldKind(typename string) (fieldKind, bool) {
+func newFieldKind(typename string) (FieldKind, bool) {
 	switch typename {
 	case "bool":
-		return boolField, true
+		return BoolField, true
 	case "bytes":
-		return bytesField, true
+		return BytesField, true
 	case "date":
-		return dateField, true
+		return DateField, true
 	case "datetime":
-		return dateTimeField, true
+		return DateTimeField, true
 	case "int":
-		return intField, true
+		return IntField, true
 	case "real":
-		return realField, true
+		return RealField, true
 	case "str":
-		return strField, true
+		return StrField, true
 	}
-	return boolField, false
+	return BoolField, false
 }
 
-func (me fieldKind) String() string {
+func (me FieldKind) String() string {
 	switch me {
-	case boolField:
+	case BoolField:
 		return "bool"
-	case bytesField:
+	case BytesField:
 		return "bytes"
-	case dateField:
+	case DateField:
 		return "date"
-	case dateTimeField:
+	case DateTimeField:
 		return "datetime"
-	case intField:
+	case IntField:
 		return "int"
-	case realField:
+	case RealField:
 		return "real"
-	case strField:
+	case StrField:
 		return "str"
 	}
-	panic("invalid fieldKind")
+	panic("invalid FieldKind")
 }

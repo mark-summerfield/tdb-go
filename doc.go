@@ -2,13 +2,19 @@
 // License: Apache-2.0
 
 /*
-Tdb provides [Marshal] and [Unmarshal] functions for writing and reading
-[]byte slices to or from Tdb “Text DataBase” format.
+Tdb provides the [Tdb] type and the [Marshal] and [Unmarshal] functions for
+writing and reading []byte slices to or from Tdb “Text DataBase” format.
 
-To use these functions you must provide a populated (for Marshal) or
-unpopulated (for Unmarshal) struct. This outer struct represents a text
-database. The outer struct must contain one or more public (inner) fields,
-each of type slice of struct. Each inner field represents a database table, and each record is represented by an inner field struct.
+The [Tdb] type stores values as type `any`, so is useful for applications
+that need to process generic Tdb files. However, if the Tdb file format is
+known, then it is best to use [Marshal] and [Unmarshal] since these use the
+appropriate concrete types (`bool`, `int`, `string`, and so on).
+
+To use the [Marshal] and [Unmarshal] functions you must provide a populated
+(for Marshal) or unpopulated (for Unmarshal) struct. This outer struct
+represents a text database. The outer struct must contain one or more public
+(inner) fields, each of type slice of struct. Each inner field represents a
+database table, and each record is represented by an inner field struct.
 
 # Tdb format
 

@@ -1,3 +1,4 @@
+# TODO Tdb type; see ~/app/py/tdb/tdb.py
 doc.go
 tdb.go
 marshal.go
@@ -5,6 +6,7 @@ unmarshal.go
 metadata.go
 util.go
 consts.go
+bin/tdb.go
 
 tdb_test.go
 tdb1_test.go

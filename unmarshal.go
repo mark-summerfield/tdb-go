@@ -24,7 +24,7 @@ func Unmarshal(data []byte, db any) error {
 	}
 	tableNames := getTableNames(dbVal)
 	metaData := make(metaDataType)
-	var metaTable *metaTableType
+	var metaTable *MetaTableType
 	lino := 1
 	for len(data) > 0 {
 		b := data[0]
@@ -81,13 +81,13 @@ func getTableNames(dbVal reflect.Value) map[string]string {
 }
 
 func readTableMetaData(data []byte, metaData metaDataType,
-	dbVal reflect.Value, lino *int) ([]byte, *metaTableType, error) {
+	dbVal reflect.Value, lino *int) ([]byte, *MetaTableType, error) {
 	end, err := scanToByte(data, '%', lino)
 	if err != nil {
 		return data, nil, err
 	}
 	parts := bytes.Fields(bytes.TrimSpace(data[:end]))
-	var metaTable *metaTableType
+	var metaTable *MetaTableType
 	var tableName string
 	var fieldName string
 	for i, part := range parts {
@@ -108,26 +108,26 @@ func readTableMetaData(data []byte, metaData metaDataType,
 	return data[end+1:], metaTable, nil // +1 skips final %
 }
 
-func addField(fieldName, typeName string, metaTable *metaTableType,
+func addField(fieldName, typeName string, metaTable *MetaTableType,
 	lino *int) error {
 	if fieldName == "" {
 		return fmt.Errorf("e%d#%d:missing fieldname or type", e111, *lino)
 	}
-	if ok := metaTable.addField(fieldName, typeName); !ok {
+	if ok := metaTable.AddField(fieldName, typeName); !ok {
 		return fmt.Errorf("e%d#%d:invalid typename %s", e112, *lino,
 			typeName)
 	}
 	return nil
 }
 
-func readRecords(data []byte, metaTable *metaTableType, dbVal reflect.Value,
+func readRecords(data []byte, metaTable *MetaTableType, dbVal reflect.Value,
 	tableNames map[string]string, lino *int) ([]byte, error) {
 	var err error
 	var table reflect.Value
 	var rec reflect.Value
 	var recVal reflect.Value
 	var field reflect.Value
-	var metaField *metaFieldType
+	var metaField *MetaFieldType
 	inRecord := false
 	columns := metaTable.Len()
 	oldColumn := -1
@@ -139,7 +139,7 @@ func readRecords(data []byte, metaTable *metaTableType, dbVal reflect.Value,
 			if err != nil {
 				return data, err
 			}
-			table, rec, err = makeRecordType(metaTable.name, dbVal,
+			table, rec, err = makeRecordType(metaTable.Name, dbVal,
 				tableNames)
 			if err != nil {
 				return data, err
@@ -153,7 +153,7 @@ func readRecords(data []byte, metaTable *metaTableType, dbVal reflect.Value,
 				return data, err
 			}
 			field = recVal.Field(column)
-			metaField = metaTable.field(column)
+			metaField = metaTable.Field(column)
 		}
 		switch data[0] {
 		case '\n': // ignore whitespace separators
@@ -162,56 +162,56 @@ func readRecords(data []byte, metaTable *metaTableType, dbVal reflect.Value,
 		case ' ', '\t', '\r': // ignore whitespace separators
 			data = data[1:]
 		case '!':
-			data, err = handleSentinal(data, metaField, field, lino)
+			data, err = unmarshalSentinal(data, metaField, field, lino)
 			column++
 		case 'F', 'f', 'N', 'n':
-			data, err = handleBool(data, false, metaField, field, lino)
+			data, err = unmarshalBool(data, false, metaField, field, lino)
 			column++
 		case 'T', 't', 'Y', 'y':
-			data, err = handleBool(data, true, metaField, field, lino)
+			data, err = unmarshalBool(data, true, metaField, field, lino)
 			column++
 		case '(':
-			data, err = handleBytes(data, metaField, field, lino)
+			data, err = unmarshalBytes(data, metaField, field, lino)
 			column++
 		case '<':
-			data, err = handleStr(data, metaField, field, lino)
+			data, err = unmarshalStr(data, metaField, field, lino)
 			column++
 		case '-':
-			switch metaField.kind {
-			case intField:
-				data, err = handleInt(data, metaField, field, lino)
-			case realField:
-				data, err = handleReal(data, metaField, field, lino)
+			switch metaField.Kind {
+			case IntField:
+				data, err = unmarshalInt(data, metaField, field, lino)
+			case RealField:
+				data, err = unmarshalReal(data, metaField, field, lino)
 			default:
 				err = fmt.Errorf("e%d#%d:got -, expected %s", e118, *lino,
-					metaField.kind)
+					metaField.Kind)
 			}
 			column++
 		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-			switch metaField.kind {
-			case boolField:
+			switch metaField.Kind {
+			case BoolField:
 				if (data[0] == '0' || data[0] == '1') && len(data) > 1 &&
 					bytes.IndexByte([]byte{'.', 'e', 'E', '0', '1', '2',
 						'3', '4', '5', '6', '7', '8', '9'}, data[1]) == -1 {
-					data, err = handleBool(data, data[0] == '1', metaField,
-						field, lino)
+					data, err = unmarshalBool(data, data[0] == '1',
+						metaField, field, lino)
 				} else {
 					err = fmt.Errorf("e%d#%d:got %c%c, expected %s", e130,
-						*lino, data[0], data[1], metaField.kind)
+						*lino, data[0], data[1], metaField.Kind)
 				}
-			case intField:
-				data, err = handleInt(data, metaField, field, lino)
-			case realField:
-				data, err = handleReal(data, metaField, field, lino)
-			case dateField:
-				data, err = handleDateTime(data, DateFormat, metaField,
+			case IntField:
+				data, err = unmarshalInt(data, metaField, field, lino)
+			case RealField:
+				data, err = unmarshalReal(data, metaField, field, lino)
+			case DateField:
+				data, err = unmarshalDateTime(data, DateFormat, metaField,
 					field, lino)
-			case dateTimeField:
-				data, err = handleDateTime(data, DateTimeFormat, metaField,
-					field, lino)
+			case DateTimeField:
+				data, err = unmarshalDateTime(data, DateTimeFormat,
+					metaField, field, lino)
 			default: // Should never happend
 				err = fmt.Errorf("e%d#%d:got %c, expected %s", e119, *lino,
-					data[0], metaField.kind)
+					data[0], metaField.Kind)
 			}
 			column++
 		case ']': // end of table
@@ -276,41 +276,41 @@ func checkField(recVal reflect.Value, column, size, lino int) error {
 	return nil
 }
 
-func handleSentinal(data []byte, metaField *metaFieldType,
+func unmarshalSentinal(data []byte, metaField *MetaFieldType,
 	field reflect.Value, lino *int) ([]byte, error) {
-	switch metaField.kind {
-	case boolField, bytesField, strField:
+	switch metaField.Kind {
+	case BoolField, BytesField, StrField:
 		return data, fmt.Errorf(
 			"e%d#%d:the sentinal is invalid for %s fields", e115, lino,
-			metaField.kind)
-	case dateField:
+			metaField.Kind)
+	case DateField:
 		field.Set(reflect.ValueOf(DateSentinal))
-	case dateTimeField:
+	case DateTimeField:
 		field.Set(reflect.ValueOf(DateTimeSentinal))
-	case intField:
+	case IntField:
 		field.SetInt(IntSentinal)
-	case realField:
+	case RealField:
 		field.SetFloat(RealSentinal)
 	}
 	return data[1:], nil
 }
 
-func handleBool(data []byte, value bool, metaField *metaFieldType,
+func unmarshalBool(data []byte, value bool, metaField *MetaFieldType,
 	field reflect.Value, lino *int) ([]byte, error) {
-	if metaField.kind != boolField {
+	if metaField.Kind != BoolField {
 		return data, fmt.Errorf("e%d#%d:got bool, expected %s", e114, *lino,
-			metaField.kind)
+			metaField.Kind)
 	}
 	field.SetBool(value)
 	return data[1:], nil
 }
 
-func handleBytes(data []byte, metaField *metaFieldType, field reflect.Value,
-	lino *int) ([]byte, error) {
+func unmarshalBytes(data []byte, metaField *MetaFieldType,
+	field reflect.Value, lino *int) ([]byte, error) {
 	data = data[1:] // skip (
-	if metaField.kind != bytesField {
+	if metaField.Kind != BytesField {
 		return data, fmt.Errorf("e%d#%d:got bytes, expected %s", e116,
-			*lino, metaField.kind)
+			*lino, metaField.Kind)
 	}
 	data, raw, err := readHexBytes(data, lino)
 	if err != nil {
@@ -320,12 +320,12 @@ func handleBytes(data []byte, metaField *metaFieldType, field reflect.Value,
 	return data, nil
 }
 
-func handleStr(data []byte, metaField *metaFieldType, field reflect.Value,
-	lino *int) ([]byte, error) {
+func unmarshalStr(data []byte, metaField *MetaFieldType,
+	field reflect.Value, lino *int) ([]byte, error) {
 	data = data[1:] // skip <
-	if metaField.kind != strField {
+	if metaField.Kind != StrField {
 		return data, fmt.Errorf("e%d#%d:got str, expected %s", e117, *lino,
-			metaField.kind)
+			metaField.Kind)
 	}
 	data, s, err := readString(data, lino)
 	if err != nil {
@@ -335,8 +335,8 @@ func handleStr(data []byte, metaField *metaFieldType, field reflect.Value,
 	return data, nil
 }
 
-func handleInt(data []byte, metaField *metaFieldType, field reflect.Value,
-	lino *int) ([]byte, error) {
+func unmarshalInt(data []byte, metaField *MetaFieldType,
+	field reflect.Value, lino *int) ([]byte, error) {
 	data, i, err := readInt(data, lino)
 	if err != nil {
 		return data, err
@@ -345,8 +345,8 @@ func handleInt(data []byte, metaField *metaFieldType, field reflect.Value,
 	return data, nil
 }
 
-func handleReal(data []byte, metaField *metaFieldType, field reflect.Value,
-	lino *int) ([]byte, error) {
+func unmarshalReal(data []byte, metaField *MetaFieldType,
+	field reflect.Value, lino *int) ([]byte, error) {
 	data, r, err := readReal(data, lino)
 	if err != nil {
 		return data, err
@@ -355,7 +355,7 @@ func handleReal(data []byte, metaField *metaFieldType, field reflect.Value,
 	return data, nil
 }
 
-func handleDateTime(data []byte, format string, metaField *metaFieldType,
+func unmarshalDateTime(data []byte, format string, metaField *MetaFieldType,
 	field reflect.Value, lino *int) ([]byte, error) {
 	data, d, err := readDateTime(data, format, lino)
 	if err != nil {
