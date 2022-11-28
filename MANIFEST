@@ -1,6 +1,7 @@
-# TODO Tdb type; see ~/app/py/tdb/tdb.py
 doc.go
 tdb.go
+parse.go
+write.go
 marshal.go
 unmarshal.go
 metadata.go
