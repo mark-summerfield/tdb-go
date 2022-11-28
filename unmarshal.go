@@ -30,14 +30,14 @@ func Unmarshal(data []byte, db any) error {
 		b := data[0]
 		data = data[1:]
 		if b == '[' {
-			data, metaTable, err = readTableMetaData(data, metaData, dbVal,
-				&lino)
+			data, metaTable, err = unmarshalTableMetaData(data, metaData,
+				dbVal, &lino)
 			if err != nil {
 				return err
 			}
 		} else if metaTable != nil {
-			if data, err = readRecords(data, metaTable, dbVal, tableNames,
-				&lino); err == nil {
+			if data, err = unmarshalRecords(data, metaTable, dbVal,
+				tableNames, &lino); err == nil {
 				metaTable = nil
 			} else {
 				return err
@@ -80,7 +80,7 @@ func getTableNames(dbVal reflect.Value) map[string]string {
 	return tableNames
 }
 
-func readTableMetaData(data []byte, metaData metaDataType,
+func unmarshalTableMetaData(data []byte, metaData metaDataType,
 	dbVal reflect.Value, lino *int) ([]byte, *MetaTableType, error) {
 	end, err := scanToByte(data, '%', lino)
 	if err != nil {
@@ -120,8 +120,9 @@ func addField(fieldName, typeName string, metaTable *MetaTableType,
 	return nil
 }
 
-func readRecords(data []byte, metaTable *MetaTableType, dbVal reflect.Value,
-	tableNames map[string]string, lino *int) ([]byte, error) {
+func unmarshalRecords(data []byte, metaTable *MetaTableType,
+	dbVal reflect.Value, tableNames map[string]string, lino *int) ([]byte,
+	error) {
 	var err error
 	var table reflect.Value
 	var rec reflect.Value

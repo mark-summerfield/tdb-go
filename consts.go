@@ -62,6 +62,8 @@ const (
 	e128              // ✗
 	e129              // ✔
 	e130              // ✔
+	e131              // TODO
+	e132              // TODO
 )
 
 func init() {
