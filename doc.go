@@ -2,13 +2,16 @@
 // License: Apache-2.0
 
 /*
-Tdb provides the [Tdb] type and the [Marshal] and [Unmarshal] functions for
-writing and reading []byte slices to or from Tdb “Text DataBase” format.
+Tdb provides the [Parse] and [Unmarshal] functions for reading []byte slices
+of text in Tdb “Text DataBase” format, and the [Tdb.Write] and [Marshal]
+functions for writing to Tdb format.
 
-The [Tdb] type stores values as type `any`, so is useful for applications
-that need to process generic Tdb files. However, if the Tdb file format is
-known, then it is best to use [Marshal] and [Unmarshal] since these use the
-appropriate concrete types (`bool`, `int`, `string`, and so on).
+The [Parse] function creates a [Tdb] object which stores values as type
+`any`, so is useful for applications that need to process generic Tdb files.
+[Tdb] data is written in Tdb format using the [Tdb.Write] method. However,
+if the Tdb file format is known, then it is best to use [Marshal] and
+[Unmarshal] since these use the appropriate concrete types (`bool`, `int`,
+`string`, and so on).
 
 To use the [Marshal] and [Unmarshal] functions you must provide a populated
 (for Marshal) or unpopulated (for Unmarshal) struct. This outer struct

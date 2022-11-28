@@ -1,6 +1,7 @@
 package tdb
 
 import (
+	"bytes"
 	_ "embed"
 	"fmt"
 	"reflect"
@@ -9,6 +10,12 @@ import (
 	"testing"
 	"time"
 )
+
+//go:embed eg/classic.tdb
+var Classic string
+
+//go:embed eg/incidents.tdb
+var Incidents string
 
 func compare(name string, raw []byte, expected string, t *testing.T) {
 	actual := string(raw)
@@ -115,8 +122,18 @@ func Test003(t *testing.T) {
 	compare("003", raw, expected, t)
 }
 
-//go:embed eg/incidents.tdb
-var Incidents string
+func Test004(t *testing.T) {
+	db, err := Parse([]byte(Classic))
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	var buf bytes.Buffer
+	if err = db.Write(&buf); err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	fmt.Println(buf.String()) // TODO compare with Classic
+	// TODO same for other .tdb files
+}
 
 func TestIncidents(t *testing.T) {
 	type Incident struct {
