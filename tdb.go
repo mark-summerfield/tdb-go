@@ -8,7 +8,10 @@ import (
 	_ "embed"
 	"encoding/hex"
 	"fmt"
+	"github.com/mark-summerfield/gong"
 	"io"
+	"strconv"
+	"time"
 )
 
 //go:embed Version.dat
@@ -28,27 +31,19 @@ func (me *Tdb) AddTable(table *Table) {
 	me.Tables[table.Name] = table
 }
 
-// TODO refactor: writeMetaData; writeBool, writeBytes, etc.
 func (me *Tdb) Write(out io.Writer) error {
+	return me.WriteDecimals(out, -1)
+}
+
+func (me *Tdb) WriteDecimals(out io.Writer, decimals int) error {
+	if !(0 < decimals && decimals < 20) {
+		decimals = -1
+	}
+	var err error
+	nl := []byte{'\n'}
 	for _, tableName := range me.TableNames {
 		table := me.Tables[tableName]
-		_, err := out.Write([]byte{'['})
-		if err != nil {
-			return err
-		}
-		_, err = out.Write([]byte(tableName))
-		if err != nil {
-			return err
-		}
-		for _, field := range table.Fields {
-			s := fmt.Sprintf(" %s %s", field.Name, field.Kind)
-			_, err = out.Write([]byte(s))
-			if err != nil {
-				return err
-			}
-		}
-		_, err = out.Write([]byte("\n%\n"))
-		if err != nil {
+		if err = writeTableMetaData(out, table); err != nil {
 			return err
 		}
 		for _, record := range table.Records {
@@ -58,53 +53,38 @@ func (me *Tdb) Write(out io.Writer) error {
 				if err != nil {
 					return err
 				}
+				sep = " "
 				kind := table.Fields[column].Kind
 				switch kind {
 				case BoolField:
-					v, ok := value.(bool)
-					if !ok {
-						return fmt.Errorf("e%d:invalid value %v for %q",
-							e143, value, kind)
-					}
-					t := 'F'
-					if v {
-						t = 'T'
-					}
-					_, err = out.Write([]byte{byte(t)})
+					err = writeBool(out, value, kind)
 				case BytesField:
-					v, ok := value.([]byte)
-					if !ok {
-						return fmt.Errorf("e%d:invalid value %v for %q",
-							e143, value, kind)
-					}
-					_, err = out.Write([]byte{'('})
-					if err != nil {
-						return err
-					}
-					_, err = out.Write([]byte(hex.EncodeToString(v)))
-					if err != nil {
-						return err
-					}
-					_, err = out.Write([]byte{')'})
+					err = writeBytes(out, value, kind)
 				case DateField:
-					// TODO
+					err = writeDateTime(out, value, kind, DateFormat,
+						DateStrSentinal)
 				case DateTimeField:
-					// TODO
+					err = writeDateTime(out, value, kind, DateTimeFormat,
+						DateTimeStrSentinal)
 				case IntField:
-					// TODO
+					err = writeInt(out, value, kind)
 				case RealField:
-					// TODO
+					err = writeReal(out, value, kind, decimals)
 				case StrField:
-					// TODO
-				default: // should never hapend
+					err = writeStr(out, value, kind)
+				default: // should never happen
 					return fmt.Errorf("e%d:invalid kind %q", e142, kind)
 				}
 				if err != nil {
 					return err
 				}
 			}
+			_, err = out.Write(nl)
+			if err != nil {
+				return err
+			}
 		}
-		_, err = out.Write([]byte("]\n"))
+		_, err = out.Write(nl)
 		if err != nil {
 			return err
 		}
@@ -241,39 +221,15 @@ func readRecords(data []byte, table *Table, lino *int) ([]byte, error) {
 			}
 			column++
 		case '-':
-			switch kind {
-			case IntField:
-				data, err = handleInt(data, record, column, lino)
-			case RealField:
-				data, err = handleReal(data, record, column, lino)
-			default:
-				err = fmt.Errorf("e%d#%d:expected %q", e132, *lino, kind)
-			}
+			data, err = handleNegativeNumber(data, record, column, lino,
+				kind)
 			if err != nil {
 				return data, err
 			}
 			column++
 		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-			switch kind {
-			case BoolField:
-				if (data[0] == '0' || data[0] == '1') && len(data) > 1 &&
-					bytes.IndexByte([]byte{'.', 'e', 'E', '0', '1', '2',
-						'3', '4', '5', '6', '7', '8', '9'}, data[1]) == -1 {
-				} else {
-					err = fmt.Errorf("e%d#%d:got %c%c expected a %s", e133,
-						*lino, data[0], data[1], kind)
-				}
-			case DateField:
-				data, err = handleDate(data, record, column, lino)
-			case DateTimeField:
-				data, err = handleDateTime(data, record, column, lino)
-			case IntField:
-				data, err = handleInt(data, record, column, lino)
-			case RealField:
-				data, err = handleReal(data, record, column, lino)
-			default:
-				err = fmt.Errorf("e%d#%d:expected %q", e132, *lino, kind)
-			}
+			data, err = handleBoolNumberDateTime(data, record, column, lino,
+				kind)
 			if err != nil {
 				return data, err
 			}
@@ -356,6 +312,46 @@ func handleStr(data []byte, kind FieldKind, record Record, column int,
 	return data, nil
 }
 
+func handleNegativeNumber(data []byte, record Record, column int,
+	lino *int, kind FieldKind) ([]byte, error) {
+	var err error
+	switch kind {
+	case IntField:
+		data, err = handleInt(data, record, column, lino)
+	case RealField:
+		data, err = handleReal(data, record, column, lino)
+	default:
+		err = fmt.Errorf("e%d#%d:expected %q", e132, *lino, kind)
+	}
+	return data, err
+}
+
+func handleBoolNumberDateTime(data []byte, record Record, column int,
+	lino *int, kind FieldKind) ([]byte, error) {
+	var err error
+	switch kind {
+	case BoolField:
+		if (data[0] == '0' || data[0] == '1') && len(data) > 1 &&
+			bytes.IndexByte([]byte{'.', 'e', 'E', '0', '1', '2',
+				'3', '4', '5', '6', '7', '8', '9'}, data[1]) == -1 {
+		} else {
+			err = fmt.Errorf("e%d#%d:got %c%c expected a %s", e133,
+				*lino, data[0], data[1], kind)
+		}
+	case DateField:
+		data, err = handleDate(data, record, column, lino)
+	case DateTimeField:
+		data, err = handleDateTime(data, record, column, lino)
+	case IntField:
+		data, err = handleInt(data, record, column, lino)
+	case RealField:
+		data, err = handleReal(data, record, column, lino)
+	default:
+		err = fmt.Errorf("e%d#%d:expected %q", e132, *lino, kind)
+	}
+	return data, err
+}
+
 func handleInt(data []byte, record Record, column int, lino *int) ([]byte,
 	error) {
 	data, i, err := readInt(data, lino)
@@ -395,4 +391,115 @@ func handleDateTime(data []byte, record Record, column int,
 	}
 	record[column] = d
 	return data, nil
+}
+
+func writeTableMetaData(out io.Writer, table *Table) error {
+	_, err := out.Write([]byte{'['})
+	if err != nil {
+		return err
+	}
+	_, err = out.Write([]byte(table.Name))
+	if err != nil {
+		return err
+	}
+	for _, field := range table.Fields {
+		s := fmt.Sprintf(" %s %s", field.Name, field.Kind)
+		_, err = out.Write([]byte(s))
+		if err != nil {
+			return err
+		}
+	}
+	_, err = out.Write([]byte("\n%\n"))
+	return err
+}
+
+func writeBool(out io.Writer, value any, kind FieldKind) error {
+	v, ok := value.(bool)
+	if !ok {
+		return fmt.Errorf("e%d:invalid value %v for %q", e143, value, kind)
+	}
+	t := 'F'
+	if v {
+		t = 'T'
+	}
+	_, err := out.Write([]byte{byte(t)})
+	return err
+}
+
+func writeBytes(out io.Writer, value any, kind FieldKind) error {
+	v, ok := value.([]byte)
+	if !ok {
+		return fmt.Errorf("e%d:invalid value %v for %q", e144, value, kind)
+	}
+	_, err := out.Write([]byte{'('})
+	if err != nil {
+		return err
+	}
+	_, err = out.Write([]byte(hex.EncodeToString(v)))
+	if err != nil {
+		return err
+	}
+	_, err = out.Write([]byte{')'})
+	return err
+}
+
+func writeDateTime(out io.Writer, value any, kind FieldKind, format,
+	sentinal string) error {
+	v, ok := value.(time.Time)
+	if !ok {
+		return fmt.Errorf("e%d:invalid value %v for %q", e144, value, kind)
+	}
+	s := v.Format(format)
+	if s == sentinal {
+		s = "!"
+	}
+	_, err := out.Write([]byte(s))
+	return err
+}
+
+func writeInt(out io.Writer, value any, kind FieldKind) error {
+	v, ok := value.(int)
+	if !ok {
+		return fmt.Errorf("e%d:invalid value %v for %q", e145, value, kind)
+	}
+	var err error
+	if v == IntSentinal {
+		_, err = out.Write([]byte{'!'})
+	} else {
+		_, err = out.Write([]byte(strconv.Itoa(v)))
+	}
+	return err
+}
+
+func writeReal(out io.Writer, value any, kind FieldKind,
+	decimals int) error {
+	v, ok := value.(float64)
+	if !ok {
+		return fmt.Errorf("e%d:invalid value %v for %q", e141, value, kind)
+	}
+	var err error
+	if gong.IsRealClose(v, RealSentinal) {
+		_, err = out.Write([]byte{'!'})
+	} else {
+		_, err = out.Write([]byte(strconv.FormatFloat(v, 'f', decimals,
+			64)))
+	}
+	return err
+}
+
+func writeStr(out io.Writer, value any, kind FieldKind) error {
+	v, ok := value.(string)
+	if !ok {
+		return fmt.Errorf("e%d:invalid value %v for %q", e140, value, kind)
+	}
+	_, err := out.Write([]byte{'<'})
+	if err != nil {
+		return err
+	}
+	_, err = out.Write([]byte(Escape(v)))
+	if err != nil {
+		return err
+	}
+	_, err = out.Write([]byte{'>'})
+	return err
 }

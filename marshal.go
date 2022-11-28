@@ -254,23 +254,18 @@ func marshalDateTimeField(out *bytes.Buffer, field reflect.Value, tableName,
 	x := field.Interface()
 	if d, ok := x.(time.Time); ok {
 		var s string
-		sentinal := false
 		if isDate {
 			s = d.Format(DateFormat)
 			if s == DateStrSentinal {
-				sentinal = true
+				s = "!"
 			}
 		} else {
 			s = d.Format(DateTimeFormat)
 			if s == DateTimeStrSentinal {
-				sentinal = true
+				s = "!"
 			}
 		}
-		if sentinal {
-			out.WriteByte('!')
-		} else {
-			out.WriteString(s)
-		}
+		out.WriteString(s)
 	} else {
 		return fmt.Errorf(
 			"e%d#%s.%s:unrecognized field type (expected time.Time) %T",
