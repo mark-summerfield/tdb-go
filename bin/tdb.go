@@ -28,7 +28,7 @@ func getConfig() config {
 	showOpt := parser.Flag("show",
 		"Show the given .tdb file in a text user interface.")
 	decimalsOpt := parser.IntInRange("decimals", "How many decimal digits "+
-		"to use. Range 1-19 or 0 (few as possible; the default).", 1, 19, 0)
+		"to use. Range 1-19 or 0 (few as possible; the default).", 0, 19, 0)
 	if err := parser.Parse(); err != nil {
 		fmt.Println(err)
 	}

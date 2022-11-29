@@ -12,14 +12,29 @@ import (
 	"time"
 )
 
+// Write writes the [Tdb]'s tables and values to the given writer in Tdb
+// format.
+//
+// See also [WriteDecimals] and [Parse].
 func (me *Tdb) Write(out io.Writer) error {
 	return me.WriteDecimals(out, -1)
 }
 
+// WriteDecimals is a refinement of the [Write] method that writes the
+// [Tdb]'s tables and values to the given writer in Tdb format.
+//
+// By default for real numbers the [Write] method outputs them using the
+// fewest number of decimal digits necessary. In particular this means that
+// numbers whose fractional part is 0 are output like ints (e.g., 2.0 → 2).
+//
+// To control decimal output use this function. Pass a decimals value of
+// 1-19 to use exactly that number of decimal digits; any other value means
+// use the minimum number of decimal digits necessary (which may be none for
+// numbers whose fractional part is 0).
+//
+// See also [WriteDecimals] and [Parse].
 func (me *Tdb) WriteDecimals(out io.Writer, decimals int) error {
-	if !(0 < decimals && decimals < 20) {
-		decimals = -1
-	}
+	decimals = sanitizedDecimals(decimals)
 	var err error
 	nl := []byte{'\n'}
 	for _, tableName := range me.TableNames {
@@ -142,12 +157,11 @@ func writeInt(out io.Writer, value any, kind FieldKind) error {
 	if !ok {
 		return fmt.Errorf("e%d:invalid value %v for %q", e145, value, kind)
 	}
-	var err error
-	if v == IntSentinal {
-		_, err = out.Write([]byte{'!'})
-	} else {
-		_, err = out.Write([]byte(strconv.Itoa(v)))
+	s := "!"
+	if v != IntSentinal {
+		s = strconv.Itoa(v)
 	}
+	_, err := out.Write([]byte(s))
 	return err
 }
 
@@ -157,13 +171,11 @@ func writeReal(out io.Writer, value any, kind FieldKind,
 	if !ok {
 		return fmt.Errorf("e%d:invalid value %v for %q", e141, value, kind)
 	}
-	var err error
-	if gong.IsRealClose(v, RealSentinal) {
-		_, err = out.Write([]byte{'!'})
-	} else {
-		_, err = out.Write([]byte(strconv.FormatFloat(v, 'f', decimals,
-			64)))
+	s := "!"
+	if !gong.IsRealClose(v, RealSentinal) {
+		s = strconv.FormatFloat(v, 'f', decimals, 64)
 	}
+	_, err := out.Write([]byte(s))
 	return err
 }
 

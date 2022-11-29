@@ -51,11 +51,11 @@ func Unescape(s string) string {
 					result = append(result, '&')
 				}
 				raw = raw[end+1:]
-				continue
 			}
+		} else {
+			result = append(result, b)
+			raw = raw[1:]
 		}
-		result = append(result, b)
-		raw = raw[1:]
 	}
 	return string(result)
 }

@@ -8,6 +8,11 @@ import (
 	"fmt"
 )
 
+// Parse reads the data from the given string (as raw UTF-8-encoded
+// bytes) and returns a [Tdb] object that holds all the tables and values
+// (the values as “any“s).
+//
+// See also [Tdb.Write] and [Marshal] and [MarshalDecimals].
 func Parse(data []byte) (*Tdb, error) {
 	db := NewTdb()
 	var err error
@@ -239,9 +244,10 @@ func handleBoolNumberDateTime(data []byte, record Record, column int,
 				*lino, data[0], data[1], kind)
 		}
 	case DateField:
-		data, err = handleDate(data, record, column, lino)
+		data, err = handleDateTime(data, record, column, lino, DateFormat)
 	case DateTimeField:
-		data, err = handleDateTime(data, record, column, lino)
+		data, err = handleDateTime(data, record, column, lino,
+			DateTimeFormat)
 	case IntField:
 		data, err = handleInt(data, record, column, lino)
 	case RealField:
@@ -272,20 +278,9 @@ func handleReal(data []byte, record Record, column int, lino *int) ([]byte,
 	return data, nil
 }
 
-func handleDate(data []byte, record Record, column int, lino *int) ([]byte,
-	error) {
-	data, d, err := readDateTime(data, DateFormat, lino)
-	if err != nil {
-		return data, err
-	}
-	record[column] = d
-	return data, nil
-}
-
-func handleDateTime(data []byte, record Record, column int,
-	lino *int) ([]byte,
-	error) {
-	data, d, err := readDateTime(data, DateTimeFormat, lino)
+func handleDateTime(data []byte, record Record, column int, lino *int,
+	format string) ([]byte, error) {
+	data, d, err := readDateTime(data, format, lino)
 	if err != nil {
 		return data, err
 	}

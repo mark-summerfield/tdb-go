@@ -27,7 +27,7 @@ import (
 // `tdb:"MyFieldName"`, and for dates and datetimes with the type too, e.g.,
 // `tdb:"MyDateField:date"`, etc.
 //
-// See also [MarshalDecimals] and [Unmarshal].
+// See also [Tdb.Write] and [MarshalDecimals] and [Unmarshal].
 func Marshal(db any) ([]byte, error) {
 	return MarshalDecimals(db, -1)
 }
@@ -115,7 +115,7 @@ func marshalMetaData(out *bytes.Buffer, tableName string,
 		tag := tableType.Field(i).Tag.Get("tdb")
 		var typeName string
 		if tag != "" {
-			fieldName, typeName = parseTag(fieldName, tag)
+			fieldName, typeName = readTag(fieldName, tag)
 		}
 		fieldNameForIndex[i] = fieldName
 		isDate, err := marshalTableMetaData(out, field, typeName, tableName,
@@ -274,7 +274,7 @@ func marshalDateTimeField(out *bytes.Buffer, field reflect.Value, tableName,
 	return nil
 }
 
-func parseTag(name, tag string) (string, string) {
+func readTag(name, tag string) (string, string) {
 	i := strings.IndexByte(tag, ':')
 	if i == -1 {
 		if reservedWords.Contains(tag) { // `tdb:"type"`
