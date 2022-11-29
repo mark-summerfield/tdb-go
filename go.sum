@@ -1,7 +1,7 @@
 github.com/kopoli/go-terminal-size v0.0.0-20170219200355-5c97524c8b54 h1:0SMHxjkLKNawqUjjnMlCtEdj6uWZjv0+qDZ3F6GOADI=
 github.com/kopoli/go-terminal-size v0.0.0-20170219200355-5c97524c8b54/go.mod h1:bm7MVZZvHQBfqHG5X59jrRE/3ak6HvK+/Zb6aZhLR2s=
-github.com/mark-summerfield/clip v0.6.2 h1:cF5zWM9u6qDsq3XmkaL+VTRPeq+mtKY9FIfVBh76OB4=
-github.com/mark-summerfield/clip v0.6.2/go.mod h1:Cl4e3cQcXZ0RFdTrg1/Cx+OnNk93cP+X9VzMIpdJyIM=
+github.com/mark-summerfield/clip v0.7.0 h1:0r4atkuSR8vUV0qDi/bKlzDgLdR/xT8PF+v3T0GKCgc=
+github.com/mark-summerfield/clip v0.7.0/go.mod h1:Cl4e3cQcXZ0RFdTrg1/Cx+OnNk93cP+X9VzMIpdJyIM=
 github.com/mark-summerfield/gong v0.7.0 h1:BKXiIn1huJAQd0kwkrgOw0alkNqkibpS/hogLqKSCwo=
 github.com/mark-summerfield/gong v0.7.0/go.mod h1:F+hSIP39FQSKkHUnyO6WDOK84VGaD2Y3wLaGIDU6fl8=
 github.com/mark-summerfield/gset v0.8.0 h1:sHjjEEuB1YoK8xlxwl+fezWbH/WQ9vC9qj9fVnbNNWU=

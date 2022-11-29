@@ -53,16 +53,20 @@ func main() {
 func getConfig() (config, func(error)) {
 	parser := clip.NewParser()
 	parser.LongDesc = "Converts Tdb input to Tdb in the standard format."
-	parser.PositionalCount = clip.TwoPositionals
-	parser.PositionalHelp = "FILE1 must be a .tdb file." +
-		"FILE2 is - for stdout, or a .tdb file."
+	parser.PositionalCount = clip.OneOrTwoPositionals
+	parser.PositionalHelp = "FILE1 must be a .tdb file. " +
+		"If FILE2 is - or not given, output is to stdout; " +
+		"otherwise to the given .tdb file."
 	decimalsOpt := parser.IntInRange("decimals", "How many decimal digits "+
 		"to use. Range 1-19 or 0 (few as possible; the default).", 0, 19, 0)
 	if err := parser.Parse(); err != nil {
 		fmt.Println(err)
 	}
-	config := config{decimalsOpt.Value(), parser.Positionals[0],
-		parser.Positionals[1]}
+	outfile := "-"
+	if len(parser.Positionals) == 2 {
+		outfile = parser.Positionals[1]
+	}
+	config := config{decimalsOpt.Value(), parser.Positionals[0], outfile}
 	if !strings.HasSuffix(config.infile, ".tdb") {
 		parser.OnError(errors.New(
 			"error #1: can only read .tdb files"))
