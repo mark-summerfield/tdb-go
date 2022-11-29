@@ -17,7 +17,7 @@ syn sync fromstart linebreaks=3 minlines=50
 syn keyword tdbTodo TODO FIXME DELETE CHECK TEST XXX
 syn keyword tdbConst T F
 syn keyword tdbType bool bytes date datetime int real str
-syn match tdbSentinal /!/
+syn match tdbNull /?/
 syn match tdbPunctuation /[][%]/
 syn match tdbIdentifier /\<\w\+\>/ 
 syn region tdbStr start="<" end=">"
@@ -33,7 +33,7 @@ hi tdbStr  guifg=#469990 "teal
 hi tdbBytes guifg=#A6A6ED "lavender
 "hi tdbBytes guifg=#808000 "olive
 hi tdbConst guifg=#000075 "navy
-hi tdbSentinal guifg=#E6194B "red
+hi tdbNull guifg=#E6194B "red
 "hi tdbBytes  guifg=#F58231 "orange
 hi tdbTodo guibg=#FFE119 term=italic cterm=italic gui=italic "yellow
 hi tdbDateTime guifg=#297B33 "green
