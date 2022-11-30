@@ -1,4 +1,4 @@
-[emp empno int ename str job str mgr int hiredate date sal real comm real? deptno int
+[emp empno int ename str job str mgr int? hiredate date sal real comm real? deptno int
 %
 7369 <SMITH> <CLERK> 7902 1980-12-17 800.0 ? 20
 7499 <ALLEN> <SALESMAN> 7698 1981-02-20 1600.0 300.0 30

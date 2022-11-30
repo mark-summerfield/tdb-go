@@ -6,7 +6,6 @@ package tdb
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/mark-summerfield/gong"
 	"io"
 	"strconv"
 	"time"
@@ -37,6 +36,7 @@ func (me *Tdb) WriteDecimals(out io.Writer, decimals int) error {
 	decimals = sanitizedDecimals(decimals)
 	var err error
 	nl := []byte{'\n'}
+	null := []byte{'?'}
 	for _, tableName := range me.TableNames {
 		table := me.Tables[tableName]
 		if err = writeTableMetaData(out, table); err != nil {
@@ -50,26 +50,34 @@ func (me *Tdb) WriteDecimals(out io.Writer, decimals int) error {
 					return err
 				}
 				sep = " "
-				kind := table.Fields[column].Kind
-				switch kind {
-				case BoolField:
-					err = writeBool(out, value, kind)
-				case BytesField:
-					err = writeBytes(out, value, kind)
-				case DateField:
-					err = writeDateTime(out, value, kind, DateFormat,
-						DateStrSentinal)
-				case DateTimeField:
-					err = writeDateTime(out, value, kind, DateTimeFormat,
-						DateTimeStrSentinal)
-				case IntField:
-					err = writeInt(out, value, kind)
-				case RealField:
-					err = writeReal(out, value, kind, decimals)
-				case StrField:
-					err = writeStr(out, value, kind)
-				default: // should never happen
-					return fmt.Errorf("e%d:invalid kind %q", e142, kind)
+				fieldMeta := table.Fields[column]
+				kind := fieldMeta.Kind
+				if value == nil {
+					if fieldMeta.AllowNull {
+						_, err = out.Write(null)
+					} else {
+						return fmt.Errorf(e146str, e146, kind, kind)
+					}
+				} else {
+					switch kind {
+					case BoolField:
+						err = writeBool(out, value, kind)
+					case BytesField:
+						err = writeBytes(out, value, kind)
+					case DateField:
+						err = writeDateTime(out, value, kind, DateFormat)
+					case DateTimeField:
+						err = writeDateTime(out, value, kind,
+							DateTimeFormat)
+					case IntField:
+						err = writeInt(out, value, kind)
+					case RealField:
+						err = writeReal(out, value, kind, decimals)
+					case StrField:
+						err = writeStr(out, value, kind)
+					default: // should never happen
+						return fmt.Errorf("e%d:invalid kind %q", e142, kind)
+					}
 				}
 				if err != nil {
 					return err
@@ -80,7 +88,7 @@ func (me *Tdb) WriteDecimals(out io.Writer, decimals int) error {
 				return err
 			}
 		}
-		_, err = out.Write(nl)
+		_, err = out.Write([]byte("]\n"))
 		if err != nil {
 			return err
 		}
@@ -99,6 +107,9 @@ func writeTableMetaData(out io.Writer, table *Table) error {
 	}
 	for _, field := range table.Fields {
 		s := fmt.Sprintf(" %s %s", field.Name, field.Kind)
+		if field.AllowNull {
+			s += "?"
+		}
 		_, err = out.Write([]byte(s))
 		if err != nil {
 			return err
@@ -138,17 +149,13 @@ func writeBytes(out io.Writer, value any, kind FieldKind) error {
 	return err
 }
 
-func writeDateTime(out io.Writer, value any, kind FieldKind, format,
-	sentinal string) error {
+func writeDateTime(out io.Writer, value any, kind FieldKind,
+	format string) error {
 	v, ok := value.(time.Time)
 	if !ok {
 		return fmt.Errorf("e%d:invalid value %v for %q", e144, value, kind)
 	}
-	s := v.Format(format)
-	if s == sentinal {
-		s = "!"
-	}
-	_, err := out.Write([]byte(s))
+	_, err := out.Write([]byte(v.Format(format)))
 	return err
 }
 
@@ -157,11 +164,7 @@ func writeInt(out io.Writer, value any, kind FieldKind) error {
 	if !ok {
 		return fmt.Errorf("e%d:invalid value %v for %q", e145, value, kind)
 	}
-	s := "!"
-	if v != IntSentinal {
-		s = strconv.Itoa(v)
-	}
-	_, err := out.Write([]byte(s))
+	_, err := out.Write([]byte(strconv.Itoa(v)))
 	return err
 }
 
@@ -171,11 +174,7 @@ func writeReal(out io.Writer, value any, kind FieldKind,
 	if !ok {
 		return fmt.Errorf("e%d:invalid value %v for %q", e141, value, kind)
 	}
-	s := "!"
-	if !gong.IsRealClose(v, RealSentinal) {
-		s = strconv.FormatFloat(v, 'f', decimals, 64)
-	}
-	_, err := out.Write([]byte(s))
+	_, err := out.Write([]byte(strconv.FormatFloat(v, 'f', decimals, 64)))
 	return err
 }
 

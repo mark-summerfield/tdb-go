@@ -3,9 +3,7 @@
 
 package tdb
 
-import (
-	_ "embed"
-)
+import _ "embed"
 
 //go:embed Version.dat
 var Version string // This tdb package's version.

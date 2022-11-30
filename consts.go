@@ -11,21 +11,19 @@ import (
 
 // These are really constants.
 var (
-	DateSentinal     = time.Date(1808, time.August, 8, 0, 0, 0, 0, time.UTC)
-	DateTimeSentinal = time.Date(1808, time.August, 8, 8, 8, 8, 0, time.UTC)
-	byteSliceType    = reflect.TypeOf([]byte{})
-	dateTimeType     = reflect.TypeOf(DateSentinal)
-	reservedWords    gset.Set[string]
-	emptyBytes       = []byte{}
+	byteSliceType = reflect.TypeOf([]byte{})
+	dateTimeType  = reflect.TypeOf(time.Now())
+	reservedWords gset.Set[string]
+	emptyBytes    = []byte{}
 )
 
 const (
-	DateStrSentinal     = "1808-08-08"
-	DateTimeStrSentinal = "1808-08-08T08:08:08"
-	IntSentinal         = -1808080808
-	RealSentinal        = -1808080808.0808
-	DateFormat          = "2006-01-02"
-	DateTimeFormat      = "2006-01-02T15:04:05"
+	DateFormat     = "2006-01-02"
+	DateTimeFormat = "2006-01-02T15:04:05"
+	e136str        = "e%d#%d:%s fields don't allow nulls: provide a " +
+		"valid %s or change the field's type to %s?"
+	e146str = "e%d:can't write null to a not null field: provide " +
+		"a valid %s or change the field's type to %s?"
 )
 
 const (
@@ -46,22 +44,22 @@ const (
 	e112              // ✔
 	e113              // ✗
 	e114              // ✔
-	e115              // ✔
-	e116              // ✔
-	e117              // ✔
-	e118              // ✔
-	e119              // ✗
-	e120              // ✔
-	e121              // ✔
-	e122              // ✔
-	e123              // ✔
-	e124              // ✔
-	e125              // ✔
-	e126              // ✔
-	e127              // ✔
-	e128              // ✗
-	e129              // ✔
-	e130              // ✔
+	e115
+	e116 // ✔
+	e117 // ✔
+	e118 // ✔
+	e119 // ✗
+	e120 // ✔
+	e121 // ✔
+	e122 // ✔
+	e123 // ✔
+	e124 // ✔
+	e125 // ✔
+	e126 // ✔
+	e127 // ✔
+	e128 // ✗
+	e129 // ✔
+	e130 // ✔
 	e131
 	e132
 	e133
@@ -77,6 +75,7 @@ const (
 	e143
 	e144
 	e145
+	e146
 )
 
 func init() {

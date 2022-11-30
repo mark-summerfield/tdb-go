@@ -51,8 +51,8 @@ Types:
 	| real     | float64 float32            |
 	| str      | string                     |
 
-The tdb package provides constants for those types which have a sentinal
-value.
+Note that for nullable types (e.g., `bool?`, `str?`, etc.) the corresponding
+Go type must be a pointer (e.g., `*bool`, `*string`, etc.).
 
 The [Marshal] and [Unmarshal] examples use these structs:
 
@@ -65,10 +65,10 @@ The [Marshal] and [Unmarshal] examples use these structs:
 		EID        int       `tdb:"empno"`
 		Name       string    `tdb:"ename"`
 		Job        string    `tdb:"job"`
-		ManagerID  int       `tdb:"mgr"`
+		ManagerID  *int      `tdb:"mgr"` // The boss doesn't have a mgr
 		HireDate   time.Time `tdb:"hiredate:date"`
 		Salary     float64   `tdb:"sal"`
-		Commission float64   `tdb:"comm"`
+		Commission *float64  `tdb:"comm"` // Most don't get commission
 		DeptID     int       `tdb:"deptno"`
 	}
 

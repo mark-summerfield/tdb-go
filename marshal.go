@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
-	"github.com/mark-summerfield/gong"
 	"github.com/mark-summerfield/gset"
 	"reflect"
 	"strconv"
@@ -182,6 +181,7 @@ func marshalRecord(out *bytes.Buffer, record any, dateIndexes gset.Set[int],
 	for i := 0; i < recVal.NumField(); i++ {
 		out.WriteString(sep)
 		field := recVal.Field(i)
+		// TODO handle nulls
 		switch field.Kind() {
 		case reflect.Bool:
 			if field.Bool() {
@@ -191,32 +191,16 @@ func marshalRecord(out *bytes.Buffer, record any, dateIndexes gset.Set[int],
 			}
 		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32,
 			reflect.Int64:
-			i := field.Int()
-			if i == IntSentinal {
-				out.WriteByte('!')
-			} else {
-				out.WriteString(strconv.FormatInt(i, 10))
-			}
+			out.WriteString(strconv.FormatInt(field.Int(), 10))
 		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32,
 			reflect.Uint64:
 			out.WriteString(strconv.FormatUint(field.Uint(), 10))
 		case reflect.Float32:
-			r := field.Float()
-			if gong.IsRealClose(r, RealSentinal) {
-				out.WriteByte('!')
-			} else {
-				out.WriteString(strconv.FormatFloat(r, 'f', dp, 32))
-			}
+			out.WriteString(strconv.FormatFloat(field.Float(), 'f', dp, 32))
 		case reflect.Float64:
-			r := field.Float()
-			if gong.IsRealClose(r, RealSentinal) {
-				out.WriteByte('!')
-			} else {
-				out.WriteString(strconv.FormatFloat(r, 'f', dp, 64))
-			}
+			out.WriteString(strconv.FormatFloat(field.Float(), 'f', dp, 64))
 		case reflect.String:
-			s := field.String()
-			out.WriteString(fmt.Sprintf("<%s>", Escape(s)))
+			out.WriteString(fmt.Sprintf("<%s>", Escape(field.String())))
 		case reflect.Slice:
 			if err := marshalSliceField(out, field, tableName,
 				fieldNameForIndex[i]); err != nil {
@@ -256,14 +240,8 @@ func marshalDateTimeField(out *bytes.Buffer, field reflect.Value, tableName,
 		var s string
 		if isDate {
 			s = d.Format(DateFormat)
-			if s == DateStrSentinal {
-				s = "!"
-			}
 		} else {
 			s = d.Format(DateTimeFormat)
-			if s == DateTimeStrSentinal {
-				s = "!"
-			}
 		}
 		out.WriteString(s)
 	} else {

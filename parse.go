@@ -77,6 +77,7 @@ func readRecords(data []byte, table *Table, lino *int) ([]byte, error) {
 	var err error
 	var record Record = nil
 	var kind FieldKind
+	var fieldMeta *MetaFieldType
 	oldColumn := -1
 	column := 0
 	columns := table.Len()
@@ -87,7 +88,8 @@ func readRecords(data []byte, table *Table, lino *int) ([]byte, error) {
 			column = 0
 		}
 		if column != oldColumn {
-			kind = table.Fields[column].Kind
+			fieldMeta = table.Fields[column]
+			kind = fieldMeta.Kind
 		}
 		switch data[0] {
 		case '\n': // ignore whitespace
@@ -95,8 +97,8 @@ func readRecords(data []byte, table *Table, lino *int) ([]byte, error) {
 			*lino++
 		case ' ', '\t', '\r': // ignore whitespace
 			data = data[1:]
-		case '!':
-			if err = handleSentinal(kind, record, column,
+		case '?':
+			if err = handleNull(fieldMeta, record, column,
 				lino); err != nil {
 				return data, err
 			}
@@ -161,21 +163,13 @@ func advance(data []byte, column int) ([]byte, int) {
 	return data[1:], column + 1
 }
 
-func handleSentinal(kind FieldKind, record Record, column int,
+func handleNull(fieldMeta *MetaFieldType, record Record, column int,
 	lino *int) error {
-	switch kind {
-	case DateField:
-		record[column] = DateSentinal
-	case DateTimeField:
-		record[column] = DateTimeSentinal
-	case IntField:
-		record[column] = IntSentinal
-	case RealField:
-		record[column] = RealSentinal
-	default:
-		return fmt.Errorf("e%d#%d:%s fields don't have a sentinal", e136,
-			*lino, kind)
+	if !fieldMeta.AllowNull {
+		kind := fieldMeta.Kind
+		return fmt.Errorf(e136str, e136, *lino, kind, kind, kind)
 	}
+	record[column] = nil
 	return nil
 }
 

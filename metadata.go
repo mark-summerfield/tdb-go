@@ -39,9 +39,14 @@ func (me MetaTableType) Len() int {
 }
 
 func (me *MetaTableType) AddField(fieldName, typeName string) bool {
+	AllowNull := false
+	if strings.HasSuffix(typeName, "?") {
+		typeName = strings.TrimSuffix(typeName, "?")
+		AllowNull = true
+	}
 	kind, ok := newFieldKind(typeName)
 	if ok {
-		metaField := MetaFieldType{fieldName, kind}
+		metaField := MetaFieldType{fieldName, kind, AllowNull}
 		me.Fields = append(me.Fields, &metaField)
 	}
 	return ok
@@ -52,8 +57,9 @@ func (me *MetaTableType) Field(index int) *MetaFieldType {
 }
 
 type MetaFieldType struct {
-	Name string
-	Kind FieldKind
+	Name      string
+	Kind      FieldKind
+	AllowNull bool
 }
 
 type FieldKind uint8

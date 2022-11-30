@@ -54,22 +54,29 @@ type csvDatabase struct {
 type Price struct {
 	Date     time.Time `tdb:"date"`
 	Price    float64
-	Quantity int
+	Quantity *int
 	ID       string
 	Desc     string `tdb:"Description"`
 }
 
 func makeCSV(t *testing.T) csvDatabase {
-	return csvDatabase{
+	db := csvDatabase{
 		PriceList: []Price{
 			{time.Date(2022, time.September, 21, 0, 0, 0, 0, time.UTC),
-				3.99, 2, "CH1-A2", "Chisels (pair), 1in & 1¼in"},
+				3.99, nil, "CH1-A2", "Chisels (pair), 1in & 1¼in"},
 			{time.Date(2022, time.October, 2, 0, 0, 0, 0, time.UTC),
-				4.49, 1, "HV2-K9", "Hammer, 2lb"},
+				4.49, nil, "HV2-K9", "Hammer, 2lb"},
 			{time.Date(2022, time.October, 2, 0, 0, 0, 0, time.UTC),
-				5.89, 1, "SX4-D1", "Eversure Sealant, 13-floz"},
+				5.89, nil, "SX4-D1", "Eversure Sealant, 13-floz"},
 			{time.Date(2022, time.November, 13, 0, 0, 0, 0, time.UTC),
-				8.49, tdb.IntSentinal, "PV7-X2", ""},
+				8.49, nil, "PV7-X2", ""},
 		},
 	}
+	q0 := 2
+	db.PriceList[0].Quantity = &q0
+	q1 := 1
+	db.PriceList[1].Quantity = &q1
+	q2 := 1
+	db.PriceList[2].Quantity = &q2
+	return db
 }

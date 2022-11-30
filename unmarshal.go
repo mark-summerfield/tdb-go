@@ -162,8 +162,8 @@ func unmarshalRecords(data []byte, metaTable *MetaTableType,
 			*lino++
 		case ' ', '\t', '\r': // ignore whitespace separators
 			data = data[1:]
-		case '!':
-			data, err = unmarshalSentinal(data, metaField, field, lino)
+		case '?':
+			data, err = unmarshalNull(data, metaField, field, lino)
 			column++
 		case 'F', 'f', 'N', 'n':
 			data, err = unmarshalBool(data, false, metaField, field, lino)
@@ -277,22 +277,14 @@ func checkField(recVal reflect.Value, column, size, lino int) error {
 	return nil
 }
 
-func unmarshalSentinal(data []byte, metaField *MetaFieldType,
+func unmarshalNull(data []byte, metaField *MetaFieldType,
 	field reflect.Value, lino *int) ([]byte, error) {
-	switch metaField.Kind {
-	case BoolField, BytesField, StrField:
-		return data, fmt.Errorf(
-			"e%d#%d:the sentinal is invalid for %s fields", e115, lino,
-			metaField.Kind)
-	case DateField:
-		field.Set(reflect.ValueOf(DateSentinal))
-	case DateTimeField:
-		field.Set(reflect.ValueOf(DateTimeSentinal))
-	case IntField:
-		field.SetInt(IntSentinal)
-	case RealField:
-		field.SetFloat(RealSentinal)
-	}
+	// TODO set to nil if field is nullable
+	// else
+	//
+	// return fmt.Errorf("e%d#%d:can't write null to a not null field: "+
+	// 	"provide a valid %s or change the field's type to %s?", e115, lino,
+	// 	metaField.Kind, metaField.Kind)
 	return data[1:], nil
 }
 
@@ -419,7 +411,7 @@ func readDateTime(data []byte, format string,
 	lino *int) ([]byte, time.Time, error) {
 	data, raw, err := scan(data, []byte("-0123456789T:"), lino)
 	if err != nil {
-		return data, DateSentinal, err
+		return data, time.Now(), err
 	}
 	x, err := time.Parse(format, string(raw))
 	if err != nil {
@@ -427,7 +419,7 @@ func readDateTime(data []byte, format string,
 		if strings.LastIndexByte(format, 'T') != -1 {
 			what = "datetime"
 		}
-		return data, DateSentinal, fmt.Errorf("e%d#%d:invalid %s", e127,
+		return data, time.Now(), fmt.Errorf("e%d#%d:invalid %s", e127,
 			*lino, what)
 	}
 	return data, x, nil

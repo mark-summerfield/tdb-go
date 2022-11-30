@@ -308,19 +308,6 @@ func TestE114(t *testing.T) {
 	expectError(e114, err, t)
 }
 
-func TestE115(t *testing.T) {
-	type ARecord struct {
-		F bool
-	}
-	type Database struct {
-		T []ARecord
-	}
-	db := Database{}
-	raw := []byte("[T F bool\n%\nT !\n]")
-	err := Unmarshal(raw, &db)
-	expectError(e115, err, t)
-}
-
 func TestE116(t *testing.T) {
 	type ARecord struct {
 		F bool
