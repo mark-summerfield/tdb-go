@@ -279,13 +279,15 @@ func checkField(recVal reflect.Value, column, size, lino int) error {
 
 func unmarshalNull(data []byte, metaField *MetaFieldType,
 	field reflect.Value, lino *int) ([]byte, error) {
-	// TODO set to nil if field is nullable
-	// else
-	//
-	// return fmt.Errorf("e%d#%d:can't write null to a not null field: "+
-	// 	"provide a valid %s or change the field's type to %s?", e115, lino,
-	// 	metaField.Kind, metaField.Kind)
-	return data[1:], nil
+	data = data[1:]
+	if metaField.AllowNull {
+		field.Set(reflect.Zero(field.Type()))
+	} else {
+		return data, fmt.Errorf("e%d#%d:can't write null to a not null "+
+			"field: provide a valid %s or change the field's type to %s?",
+			e115, lino, metaField.Kind, metaField.Kind)
+	}
+	return data, nil
 }
 
 func unmarshalBool(data []byte, value bool, metaField *MetaFieldType,
@@ -294,7 +296,12 @@ func unmarshalBool(data []byte, value bool, metaField *MetaFieldType,
 		return data, fmt.Errorf("e%d#%d:got bool, expected %s", e114, *lino,
 			metaField.Kind)
 	}
-	field.SetBool(value)
+	if metaField.AllowNull {
+		pv := reflect.ValueOf(&value)
+		field.Set(pv)
+	} else {
+		field.SetBool(value)
+	}
 	return data[1:], nil
 }
 
@@ -309,7 +316,12 @@ func unmarshalBytes(data []byte, metaField *MetaFieldType,
 	if err != nil {
 		return data, err
 	}
-	field.SetBytes(raw)
+	if metaField.AllowNull {
+		pv := reflect.ValueOf(&raw)
+		field.Set(pv)
+	} else {
+		field.SetBytes(raw)
+	}
 	return data, nil
 }
 
@@ -324,7 +336,12 @@ func unmarshalStr(data []byte, metaField *MetaFieldType,
 	if err != nil {
 		return data, err
 	}
-	field.SetString(s)
+	if metaField.AllowNull {
+		pv := reflect.ValueOf(&s)
+		field.Set(pv)
+	} else {
+		field.SetString(s)
+	}
 	return data, nil
 }
 
@@ -334,7 +351,12 @@ func unmarshalInt(data []byte, metaField *MetaFieldType,
 	if err != nil {
 		return data, err
 	}
-	field.SetInt(int64(i))
+	if metaField.AllowNull {
+		pv := reflect.ValueOf(&i)
+		field.Set(pv)
+	} else {
+		field.SetInt(int64(i))
+	}
 	return data, nil
 }
 
@@ -344,7 +366,12 @@ func unmarshalReal(data []byte, metaField *MetaFieldType,
 	if err != nil {
 		return data, err
 	}
-	field.SetFloat(r)
+	if metaField.AllowNull {
+		pv := reflect.ValueOf(&r)
+		field.Set(pv)
+	} else {
+		field.SetFloat(r)
+	}
 	return data, nil
 }
 
@@ -354,7 +381,12 @@ func unmarshalDateTime(data []byte, format string, metaField *MetaFieldType,
 	if err != nil {
 		return data, err
 	}
-	field.Set(reflect.ValueOf(d))
+	if metaField.AllowNull {
+		pv := reflect.ValueOf(&d)
+		field.Set(pv)
+	} else {
+		field.Set(reflect.ValueOf(d))
+	}
 	return data, err
 }
 

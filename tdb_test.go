@@ -128,11 +128,11 @@ func Test004(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 	var buf bytes.Buffer
-	if err = db.Write(&buf); err != nil {
+	if err = db.WriteDecimals(&buf, 1); err != nil {
 		t.Errorf("unexpected error: %v", err)
 	}
-	fmt.Println(buf.String()) // TODO compare with Classic
-	// TODO same for other .tdb files
+	raw := buf.String()
+	compare("004", []byte(raw), Classic, t)
 }
 
 func TestIncidents(t *testing.T) {

@@ -136,21 +136,27 @@ func marshalTableMetaData(out *bytes.Buffer, field reflect.Value, typeName,
 	out.WriteByte(' ')
 	out.WriteString(fieldName)
 	out.WriteByte(' ')
-	switch field.Kind() {
+	nullable := ""
+	kind := field.Kind()
+	if kind == reflect.Ptr {
+		kind = field.Elem().Kind()
+		nullable = "?"
+	}
+	switch kind {
 	case reflect.Bool:
-		out.WriteString("bool")
+		out.WriteString("bool" + nullable)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32,
 		reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16,
 		reflect.Uint32, reflect.Uint64:
-		out.WriteString("int")
+		out.WriteString("int" + nullable)
 	case reflect.Float32, reflect.Float64:
-		out.WriteString("real")
+		out.WriteString("real" + nullable)
 	case reflect.String:
-		out.WriteString("str")
+		out.WriteString("str" + nullable)
 	case reflect.Slice:
 		x := field.Interface()
 		if reflect.TypeOf(x) == byteSliceType {
-			out.WriteString("bytes")
+			out.WriteString("bytes" + nullable)
 		} else {
 			return isDate, fmt.Errorf(
 				"e%d#%s.%s:unrecognized field slice type %T", e103,
@@ -161,9 +167,9 @@ func marshalTableMetaData(out *bytes.Buffer, field reflect.Value, typeName,
 		if reflect.TypeOf(x) == dateTimeType {
 			if typeName == "date" {
 				isDate = true
-				out.WriteString(typeName)
+				out.WriteString(typeName + nullable)
 			} else {
-				out.WriteString("datetime")
+				out.WriteString("datetime" + nullable)
 			}
 		} else {
 			return isDate, fmt.Errorf(
@@ -180,8 +186,15 @@ func marshalRecord(out *bytes.Buffer, record any, dateIndexes gset.Set[int],
 	sep := ""
 	for i := 0; i < recVal.NumField(); i++ {
 		out.WriteString(sep)
+		sep = " "
 		field := recVal.Field(i)
-		// TODO handle nulls
+		if field.Kind() == reflect.Ptr {
+			if field.IsNil() {
+				out.WriteByte('?')
+				continue
+			}
+			field = field.Elem()
+		}
 		switch field.Kind() {
 		case reflect.Bool:
 			if field.Bool() {
@@ -212,7 +225,6 @@ func marshalRecord(out *bytes.Buffer, record any, dateIndexes gset.Set[int],
 				return err
 			}
 		}
-		sep = " "
 	}
 	out.WriteByte('\n')
 	return nil
