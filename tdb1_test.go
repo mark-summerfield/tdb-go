@@ -57,10 +57,10 @@ type db1Database struct {
 type Customer struct {
 	Cid     int `tdb:"CID"`
 	Company string
-	Address string
+	Address *string
 	Contact string
 	Email   string
-	Icon    []byte
+	Icon    *[]byte
 }
 
 type Invoice struct {
@@ -69,7 +69,7 @@ type Invoice struct {
 	Raised time.Time `tdb:"Raised_Date:date"`
 	Due    time.Time `tdb:"Due_Date:date"`
 	Paid   bool
-	Desc   string `tdb:"Description"`
+	Desc   *string `tdb:"Description"`
 }
 
 type LineItem struct {
@@ -86,22 +86,22 @@ func makeDb(t *testing.T) db1Database {
 	if err != nil {
 		t.Error(err)
 	}
+	var noicon []byte
 	db := db1Database{
 		Customers: []Customer{
-			{50, "Best People", "123 Somewhere", "John Doe", "j@doe.com",
-				icon},
-			{19, "Supersuppliers", "", "Jane Doe",
-				"jane@super.com", []byte{}},
+			{50, "Best People", nil, "John Doe", "j@doe.com", &icon},
+			{19, "Supersuppliers", nil, "Jane Doe", "jane@super.com",
+				&noicon},
 		},
 		Invoices: []Invoice{
 			{152, 50, time.Date(2022,
 				time.January, 17, 0, 0, 0, 0, time.UTC),
 				time.Date(2022, time.February, 17, 0, 0, 0, 0, time.UTC),
-				false, "COD"},
+				false, nil},
 			{153, 19,
 				time.Date(2022, time.January, 19, 0, 0, 0, 0, time.UTC),
 				time.Date(2022, time.February, 19, 0, 0, 0, 0, time.UTC),
-				true, ""},
+				true, nil},
 		},
 		LineItems: []LineItem{
 			{1839, 152,
@@ -114,5 +114,9 @@ func makeDb(t *testing.T) db1Database {
 				time.Date(2022, time.January, 19, 0, 0, 0, 0, time.UTC),
 				-11.5, 1, "Washers (1\")"},
 		}}
+	a0 := "123 Somewhere"
+	db.Customers[0].Address = &a0
+	i0 := "COD"
+	db.Invoices[0].Desc = &i0
 	return db
 }

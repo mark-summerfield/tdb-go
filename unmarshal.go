@@ -296,7 +296,7 @@ func unmarshalBool(data []byte, value bool, metaField *MetaFieldType,
 		return data, fmt.Errorf("e%d#%d:got bool, expected %s", e114, *lino,
 			metaField.Kind)
 	}
-	if metaField.AllowNull {
+	if field.Kind() == reflect.Ptr {
 		pv := reflect.ValueOf(&value)
 		field.Set(pv)
 	} else {
@@ -316,7 +316,7 @@ func unmarshalBytes(data []byte, metaField *MetaFieldType,
 	if err != nil {
 		return data, err
 	}
-	if metaField.AllowNull {
+	if field.Kind() == reflect.Ptr {
 		pv := reflect.ValueOf(&raw)
 		field.Set(pv)
 	} else {
@@ -336,7 +336,7 @@ func unmarshalStr(data []byte, metaField *MetaFieldType,
 	if err != nil {
 		return data, err
 	}
-	if metaField.AllowNull {
+	if field.Kind() == reflect.Ptr {
 		pv := reflect.ValueOf(&s)
 		field.Set(pv)
 	} else {
@@ -351,7 +351,7 @@ func unmarshalInt(data []byte, metaField *MetaFieldType,
 	if err != nil {
 		return data, err
 	}
-	if metaField.AllowNull {
+	if field.Kind() == reflect.Ptr {
 		pv := reflect.ValueOf(&i)
 		field.Set(pv)
 	} else {
@@ -366,7 +366,7 @@ func unmarshalReal(data []byte, metaField *MetaFieldType,
 	if err != nil {
 		return data, err
 	}
-	if metaField.AllowNull {
+	if field.Kind() == reflect.Ptr {
 		pv := reflect.ValueOf(&r)
 		field.Set(pv)
 	} else {
@@ -381,7 +381,7 @@ func unmarshalDateTime(data []byte, format string, metaField *MetaFieldType,
 	if err != nil {
 		return data, err
 	}
-	if metaField.AllowNull {
+	if field.Kind() == reflect.Ptr {
 		pv := reflect.ValueOf(&d)
 		field.Set(pv)
 	} else {

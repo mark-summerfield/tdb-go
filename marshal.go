@@ -136,34 +136,25 @@ func marshalTableMetaData(out *bytes.Buffer, field reflect.Value, typeName,
 	out.WriteByte(' ')
 	out.WriteString(fieldName)
 	out.WriteByte(' ')
-	nullable := ""
 	kind := field.Kind()
 	if kind == reflect.Ptr {
-		// FIXME How can I improve upon this truly awful hack?
-		switch field.Type().String() {
-		case "*int", "*int8", "*uint8", "*int16", "*uint16", "*int32",
-			"*uint32", "*int64", "*uint64":
-			kind = reflect.Int
-		case "*float32", "*float64":
-			kind = reflect.Float64
-		}
-		nullable = "?"
+		return hack(out, field, typeName)
 	}
 	switch kind {
 	case reflect.Bool:
-		out.WriteString("bool" + nullable)
+		out.WriteString("bool")
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32,
 		reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16,
 		reflect.Uint32, reflect.Uint64:
-		out.WriteString("int" + nullable)
+		out.WriteString("int")
 	case reflect.Float32, reflect.Float64:
-		out.WriteString("real" + nullable)
+		out.WriteString("real")
 	case reflect.String:
-		out.WriteString("str" + nullable)
+		out.WriteString("str")
 	case reflect.Slice:
 		x := field.Interface()
 		if reflect.TypeOf(x) == byteSliceType {
-			out.WriteString("bytes" + nullable)
+			out.WriteString("bytes")
 		} else {
 			return isDate, fmt.Errorf(
 				"e%d#%s.%s:unrecognized field slice type %T", e103,
@@ -174,14 +165,41 @@ func marshalTableMetaData(out *bytes.Buffer, field reflect.Value, typeName,
 		if reflect.TypeOf(x) == dateTimeType {
 			if typeName == "date" {
 				isDate = true
-				out.WriteString(typeName + nullable)
+				out.WriteString(typeName)
 			} else {
-				out.WriteString("datetime" + nullable)
+				out.WriteString("datetime")
 			}
 		} else {
 			return isDate, fmt.Errorf(
 				"e%d#%s.%s:unrecognized field type %T", e104, tableName,
 				fieldName, x)
+		}
+	}
+	return isDate, nil
+}
+
+// FIXME How can I improve upon this truly awful hack?
+func hack(out *bytes.Buffer, field reflect.Value,
+	typeName string) (bool, error) {
+	isDate := false
+	switch field.Type().String() {
+	case "*bool":
+		out.WriteString("bool?")
+	case "*int", "*int8", "*uint8", "*int16", "*uint16", "*int32",
+		"*uint32", "*int64", "*uint64":
+		out.WriteString("int?")
+	case "*float32", "*float64":
+		out.WriteString("real?")
+	case "*string":
+		out.WriteString("str?")
+	case "*[]byte", "*[]uint8":
+		out.WriteString("bytes?")
+	case "*time.Time":
+		if typeName == "date" {
+			isDate = true
+			out.WriteString("date?")
+		} else {
+			out.WriteString("datetime?")
 		}
 	}
 	return isDate, nil
@@ -222,7 +240,9 @@ func marshalRecord(out *bytes.Buffer, record any, dateIndexes gset.Set[int],
 		case reflect.String:
 			out.WriteString(fmt.Sprintf("<%s>", Escape(field.String())))
 		case reflect.Slice:
-			if err := marshalSliceField(out, field, tableName,
+			if field.IsNil() {
+				out.WriteByte('?')
+			} else if err := marshalSliceField(out, field, tableName,
 				fieldNameForIndex[i]); err != nil {
 				return err
 			}
