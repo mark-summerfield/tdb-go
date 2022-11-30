@@ -139,7 +139,14 @@ func marshalTableMetaData(out *bytes.Buffer, field reflect.Value, typeName,
 	nullable := ""
 	kind := field.Kind()
 	if kind == reflect.Ptr {
-		kind = field.Elem().Kind()
+		// FIXME How can I improve upon this truly awful hack?
+		switch field.Type().String() {
+		case "*int", "*int8", "*uint8", "*int16", "*uint16", "*int32",
+			"*uint32", "*int64", "*uint64":
+			kind = reflect.Int
+		case "*float32", "*float64":
+			kind = reflect.Float64
+		}
 		nullable = "?"
 	}
 	switch kind {

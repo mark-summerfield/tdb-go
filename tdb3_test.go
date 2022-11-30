@@ -80,12 +80,17 @@ func ExampleUnmarshal() {
 	fmt.Printf("%d Employees\n", len(db.Employees))
 	fmt.Printf("%d Departments\n", len(db.Departments))
 	president := db.Employees[2]
-	managerID := president.ManagerID
-	commission := president.Commission
+	managerID := -1
+	if president.ManagerID != nil {
+		managerID = *president.ManagerID
+	}
+	commission := 0.0
+	if president.Commission != nil {
+		commission = *president.Commission
+	}
 	fmt.Printf("%d %q %q %d %s %g %g %d\n", president.EID, president.Name,
-		president.Job, *managerID,
-		president.HireDate.Format(tdb.DateFormat),
-		president.Salary, *commission, president.DeptID)
+		president.Job, managerID, president.HireDate.Format(tdb.DateFormat),
+		president.Salary, commission, president.DeptID)
 	research := db.Departments[1]
 	fmt.Printf("%d %q %q\n", research.DID, research.Name, research.Location)
 	// Output:
