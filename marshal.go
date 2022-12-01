@@ -136,9 +136,11 @@ func marshalTableMetaData(out *bytes.Buffer, field reflect.Value, typeName,
 	out.WriteByte(' ')
 	out.WriteString(fieldName)
 	out.WriteByte(' ')
+	nullable := false
 	kind := field.Kind()
 	if kind == reflect.Ptr {
-		return hack(out, field, typeName)
+		kind = field.Type().Elem().Kind()
+		nullable = true
 	}
 	switch kind {
 	case reflect.Bool:
@@ -152,13 +154,18 @@ func marshalTableMetaData(out *bytes.Buffer, field reflect.Value, typeName,
 	case reflect.String:
 		out.WriteString("str")
 	case reflect.Slice:
-		x := field.Interface()
-		if reflect.TypeOf(x) == byteSliceType {
+		if field.Kind() == reflect.Ptr &&
+			field.Elem().Type() == byteSliceType {
 			out.WriteString("bytes")
 		} else {
-			return isDate, fmt.Errorf(
-				"e%d#%s.%s:unrecognized field slice type %T", e103,
-				tableName, fieldName, field)
+			x := field.Interface()
+			if reflect.TypeOf(x) == byteSliceType {
+				out.WriteString("bytes")
+			} else {
+				return isDate, fmt.Errorf(
+					"e%d#%s.%s:unrecognized field slice type %T", e103,
+					tableName, fieldName, field)
+			}
 		}
 	default:
 		x := field.Interface()
@@ -175,32 +182,8 @@ func marshalTableMetaData(out *bytes.Buffer, field reflect.Value, typeName,
 				fieldName, x)
 		}
 	}
-	return isDate, nil
-}
-
-// FIXME How can I improve upon this truly awful hack?
-func hack(out *bytes.Buffer, field reflect.Value,
-	typeName string) (bool, error) {
-	isDate := false
-	switch field.Type().String() {
-	case "*bool":
-		out.WriteString("bool?")
-	case "*int", "*int8", "*uint8", "*int16", "*uint16", "*int32",
-		"*uint32", "*int64", "*uint64":
-		out.WriteString("int?")
-	case "*float32", "*float64":
-		out.WriteString("real?")
-	case "*string":
-		out.WriteString("str?")
-	case "*[]byte", "*[]uint8":
-		out.WriteString("bytes?")
-	case "*time.Time":
-		if typeName == "date" {
-			isDate = true
-			out.WriteString("date?")
-		} else {
-			out.WriteString("datetime?")
-		}
+	if nullable {
+		out.WriteByte('?')
 	}
 	return isDate, nil
 }
