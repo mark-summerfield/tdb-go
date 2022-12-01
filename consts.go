@@ -11,8 +11,8 @@ import (
 
 // These are really constants.
 var (
-	byteSliceType = reflect.TypeOf([]byte{})
-	dateTimeType  = reflect.TypeOf(time.Now())
+	byteSliceType = reflect.TypeOf([]byte(nil))
+	dateTimeType  = reflect.TypeOf(time.Time{})
 	reservedWords gset.Set[string]
 	emptyBytes    = []byte{}
 )
