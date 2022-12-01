@@ -157,6 +157,7 @@ func marshalTableMetaData(out *bytes.Buffer, field reflect.Value, typeName,
 		if field.Kind() == reflect.Ptr &&
 			field.Elem().Type() == byteSliceType {
 			out.WriteString("bytes")
+			nullable = true
 		} else {
 			x := field.Interface()
 			if reflect.TypeOf(x) == byteSliceType {
